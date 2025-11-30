@@ -1,0 +1,20 @@
+const API_URL = 'http://localhost:3000/admin/auth';
+
+export const api = {
+    get: async (endpoint: string) => {
+        const res = await fetch(`${API_URL}${endpoint}`);
+        return res.json();
+    },
+    post: async (endpoint: string, body: any) => {
+        const res = await fetch(`${API_URL}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw error;
+        }
+        return res.json();
+    }
+};

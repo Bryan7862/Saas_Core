@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
-import { RolesPage } from './pages/RolesPage';
-import { UsersPage } from './pages/UsersPage';
+// import { RolesPage } from './pages/RolesPage'; // Deprecated
+import { UsersPage } from './modules/iam/pages/UsersPage'; // Modular Version
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 
@@ -18,7 +18,7 @@ function App() {
                         <Layout>
                             <Routes>
                                 <Route path="/" element={<DashboardPage />} />
-                                <Route path="/roles" element={<RolesPage />} />
+                                {/* <Route path="/roles" element={<RolesPage />} /> */}
                                 <Route path="/users" element={<UsersPage />} />
                             </Routes>
                         </Layout>

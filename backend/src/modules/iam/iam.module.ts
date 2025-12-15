@@ -7,6 +7,7 @@ import { Permission } from './entities/permission.entity';
 import { UserRole } from './entities/user-role.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { User } from '../auth/entities/user.entity'; // Needed for UserRole relation check if any
+import { RolesGuard } from './roles.guard';
 
 @Module({
     imports: [
@@ -19,7 +20,7 @@ import { User } from '../auth/entities/user.entity'; // Needed for UserRole rela
         ]),
     ],
     controllers: [IamController],
-    providers: [IamService],
-    exports: [IamService],
+    providers: [IamService, RolesGuard],
+    exports: [IamService, RolesGuard],
 })
 export class IamModule { }

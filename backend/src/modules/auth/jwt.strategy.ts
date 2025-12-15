@@ -6,7 +6,7 @@ import { AuthService } from './auth.service'; // We'll use AuthService to valida
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor() {
+    constructor(private readonly authService: AuthService) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
@@ -15,8 +15,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: JwtPayload) {
-        // payload contains sub (userId) and email, etc.
-        // Here we simply return the payload; the guard will attach it to request.user
-        return { userId: payload.sub, email: payload.email };
+        // Fetch fresh user data with roles on every request
+        const user = await this.authService.getUserWithRoles(payload.sub);
+        if (!user) {
+            return null; // or throw UnauthorizedException
+        }
+        return user; // { userId, email, roles: ['...'] }
     }
 }

@@ -1,14 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Building2 } from 'lucide-react';
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
 
     const navItems = [
         { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/organizations', label: 'Organizations', icon: Building2 },
         { path: '/users', label: 'Users', icon: Users },
-        { path: '/roles', label: 'Roles', icon: Shield },
+        // { path: '/roles', label: 'Roles', icon: Shield },
     ];
 
     return (
@@ -31,8 +32,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? 'bg-slate-800 text-[var(--primary)]'
-                                        : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-slate-900'
+                                    ? 'bg-slate-800 text-[var(--primary)]'
+                                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-slate-900'
                                     }`}
                             >
                                 <Icon size={20} />

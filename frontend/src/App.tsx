@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 // import { RolesPage } from './pages/RolesPage'; // Deprecated
 import { UsersPage } from './modules/iam/pages/UsersPage'; // Modular Version
+import { OrganizationsPage } from './modules/organizations/pages/OrganizationsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 
@@ -20,6 +21,7 @@ function App() {
                                 <Route path="/" element={<DashboardPage />} />
                                 {/* <Route path="/roles" element={<RolesPage />} /> */}
                                 <Route path="/users" element={<UsersPage />} />
+                                <Route path="/organizations" element={<OrganizationsPage />} />
                             </Routes>
                         </Layout>
                     }

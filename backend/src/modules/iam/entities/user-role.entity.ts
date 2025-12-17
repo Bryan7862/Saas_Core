@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Role } from './role.entity';
+import { Company } from '../../organizations/entities/company.entity';
 
 @Entity('usuarios_roles')
 @Unique(['userId', 'companyId', 'roleId'])
@@ -24,4 +25,8 @@ export class UserRole {
     @ManyToOne(() => Role, (role) => role.userRoles, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'role_id' })
     role: Role;
+
+    @ManyToOne(() => Company, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'company_id' })
+    company: Company;
 }

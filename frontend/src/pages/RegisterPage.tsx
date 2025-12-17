@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
-import { UserPlus, Building2, User, Mail, Lock } from 'lucide-react';
+import { Building2, User, Mail, Lock } from 'lucide-react';
 
 export function RegisterPage() {
     const navigate = useNavigate();
@@ -21,12 +21,15 @@ export function RegisterPage() {
         setError(null);
 
         try {
-            await api.post('/register', formData);
-            // On success, redirect to users page or dashboard (simulating login for now)
-            navigate('/users');
+            await api.post('/admin/auth/register', formData);
+            // On success, redirect to login page
+            navigate('/login');
         } catch (err: any) {
             console.error('Registration failed', err);
-            const msg = Array.isArray(err.message) ? err.message.join(', ') : err.message || 'Registration failed';
+            const responseMsg = err.response?.data?.message;
+            const msg = Array.isArray(responseMsg)
+                ? responseMsg.join(', ')
+                : responseMsg || err.message || 'Registration failed';
             setError(msg);
         } finally {
             setLoading(false);

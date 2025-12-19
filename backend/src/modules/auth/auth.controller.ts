@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Headers, Req, UseGuards, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('admin/auth')
 export class AuthController {
@@ -13,6 +14,7 @@ export class AuthController {
         return this.authService.register(registerDto);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('users')
     createUser(@Body() createUserDto: CreateUserDto) {
         return this.authService.createUser(createUserDto);
@@ -24,8 +26,24 @@ export class AuthController {
         return this.authService.login(user);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('users')
-    getUsers(@Headers('x-company-id') companyId: string) {
-        return this.authService.getUsers(companyId);
+    getUsers(@Req() req, @Headers('x-company-id') companyId: string) {
+        return this.authService.getUsers(req.user.userId, companyId);
+    }
+
+    // New Endpoint for Global Admin
+    // TODO: Add @Roles('SUPER_ADMIN') when RolesGuard is fully configured for it
+    @UseGuards(JwtAuthGuard)
+    @Get('system/users')
+    getAllSystemUsers() {
+        return this.authService.getAllSystemUsers();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('users/:id')
+    suspendUser(@Param('id') id: string, @Req() req) {
+        // In a real app, you might want to check if the requester has permission to suspend THIS user
+        return this.authService.suspendUser(id, req.user.userId);
     }
 }

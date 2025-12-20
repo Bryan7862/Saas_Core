@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, Shield, Trash2 } from 'lucide-react';
 import { getUsers } from '../api';
 import { RoleBadge } from '../components/RoleBadge';
 import { CreateRoleModal } from '../components/CreateRoleModal';
@@ -9,13 +9,24 @@ import { api } from '../../../lib/api'; // Using default axios instance for Crea
 export const UsersPage = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ email: '', password: '', defaultCompanyId: '' });
+    const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '' });
     const [error, setError] = useState<string | null>(null);
 
     // Modals
     const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
     const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!window.confirm('Are you sure you want to suspend this user? They can be restored from the Recycle Bin.')) return;
+        try {
+            await api.delete(`/admin/auth/users/${userId}`);
+            loadUsers();
+        } catch (error) {
+            console.error('Failed to suspend user', error);
+            alert('Failed to suspend user');
+        }
+    };
 
     useEffect(() => {
         loadUsers();
@@ -38,15 +49,21 @@ export const UsersPage = () => {
         setLoading(true);
         setError(null);
         try {
+            const currentCompanyId = localStorage.getItem('current_company_id');
+            if (!currentCompanyId) {
+                throw new Error('No active organization context found. Please select an organization first.');
+            }
+
             const payload: any = {
                 email: formData.email,
                 password: formData.password,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                defaultCompanyId: currentCompanyId,
             };
-            if (formData.defaultCompanyId) {
-                payload.defaultCompanyId = formData.defaultCompanyId;
-            }
+
             await api.post('/admin/auth/users', payload); // Ensure correct endpoint path
-            setFormData({ email: '', password: '', defaultCompanyId: '' });
+            setFormData({ email: '', password: '', firstName: '', lastName: '' });
             loadUsers();
             alert('User created successfully');
         } catch (err: any) {
@@ -90,12 +107,41 @@ export const UsersPage = () => {
                         </div>
                     )}
                     <form onSubmit={handleCreateUser} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    placeholder="John"
+                                    value={formData.firstName}
+                                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    placeholder="Doe"
+                                    value={formData.lastName}
+                                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                />
+                            </div>
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-[var(--muted)] mb-1">Email</label>
                             <input
                                 type="email"
                                 required
+<<<<<<< HEAD
                                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+=======
+                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                placeholder="john@company.com"
+>>>>>>> origin/master
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
@@ -112,6 +158,7 @@ export const UsersPage = () => {
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             />
                         </div>
+<<<<<<< HEAD
                         <div>
                             <label className="block text-sm font-medium text-[var(--muted)] mb-1">Default Company ID (UUID)</label>
                             <input
@@ -123,6 +170,14 @@ export const UsersPage = () => {
                             />
                         </div>
                         <button type="submit" disabled={loading} className="w-full bg-[var(--primary)] text-white py-2 rounded hover:opacity-90 transition-opacity font-medium">
+=======
+                        {/* Hidden Company ID - Auto-filled from context */}
+                        <div className="text-xs text-gray-400 mt-1">
+                            Creating user for current organization context.
+                        </div>
+
+                        <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white py-2 rounded hover:bg-slate-800 transition-colors">
+>>>>>>> origin/master
                             Create User
                         </button>
                     </form>
@@ -182,6 +237,7 @@ export const UsersPage = () => {
                                             {(!user.userRoles || user.userRoles.length === 0) && <span className="text-[var(--muted)] text-xs italic">No roles</span>}
                                         </div>
                                     </td>
+<<<<<<< HEAD
                                     <td className="py-3 px-4">
                                         <button
                                             onClick={() => handleEditClick(user)}
@@ -189,6 +245,28 @@ export const UsersPage = () => {
                                         >
                                             Edit Roles
                                         </button>
+=======
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedUser(user);
+                                                    setIsEditRoleOpen(true);
+                                                }}
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                                title="Edit Roles"
+                                            >
+                                                Edit Roles
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser(user.id)}
+                                                className="text-red-600 hover:text-red-900"
+                                                title="Suspend User"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+>>>>>>> origin/master
                                     </td>
                                 </tr>
                             ))}

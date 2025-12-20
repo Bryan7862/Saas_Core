@@ -6,6 +6,7 @@ import { UsersPage } from './modules/iam/pages/UsersPage'; // Modular Version
 import { OrganizationsPage } from './modules/organizations/pages/OrganizationsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './modules/auth/pages/LoginPage';
+<<<<<<< HEAD
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { BillingPage } from './pages/BillingPage';
@@ -23,12 +24,29 @@ function App() {
                     <Route
                         path="/*"
                         element={
+=======
+import { TrashPage } from './modules/trash/pages/TrashPage';
+
+import { RequireAuth } from './components/RequireAuth';
+
+function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                    path="/*"
+                    element={
+                        <RequireAuth>
+>>>>>>> origin/master
                             <Layout>
                                 <Routes>
                                     <Route path="/" element={<DashboardPage />} />
                                     {/* <Route path="/roles" element={<RolesPage />} /> */}
                                     <Route path="/users" element={<UsersPage />} />
                                     <Route path="/organizations" element={<OrganizationsPage />} />
+<<<<<<< HEAD
 
                                     {/* New Functional Routes */}
                                     <Route path="/profile" element={<ProfilePage />} />
@@ -43,6 +61,16 @@ function App() {
                 </Routes>
             </BrowserRouter>
         </ThemeProvider>
+=======
+                                    <Route path="/trash" element={<TrashPage />} />
+                                </Routes>
+                            </Layout>
+                        </RequireAuth>
+                    }
+                />
+            </Routes>
+        </BrowserRouter>
+>>>>>>> origin/master
     );
 }
 

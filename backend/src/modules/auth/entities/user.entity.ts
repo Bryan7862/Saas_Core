@@ -4,7 +4,7 @@ import { Company } from '../../organizations/entities/company.entity';
 
 export enum UserStatus {
     ACTIVE = 'ACTIVE',
-    BLOCKED = 'BLOCKED',
+    SUSPENDED = 'SUSPENDED',
 }
 
 @Entity('usuarios')
@@ -26,6 +26,12 @@ export class User {
 
     @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
     status: UserStatus;
+
+    @Column({ name: 'suspended_at', type: 'timestamp', nullable: true })
+    suspendedAt: Date | null;
+
+    @Column({ name: 'suspended_by', type: 'uuid', nullable: true })
+    suspendedByUserId: string | null;
 
     @Column({ name: 'default_company_id', type: 'uuid', nullable: true })
     defaultCompanyId: string | null;

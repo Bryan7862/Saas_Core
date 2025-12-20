@@ -108,4 +108,8 @@ export class IamService {
     async findRoleByCode(code: string): Promise<Role | null> {
         return this.roleRepository.findOne({ where: { code } });
     }
+
+    async countCompanyUsers(companyId: string): Promise<number> {
+        return this.userRoleRepository.count({ where: { companyId } });
+    }
 }

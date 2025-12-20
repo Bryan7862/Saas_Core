@@ -1,11 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Company } from './entities/company.entity';
+import { Company, CompanyStatus } from './entities/company.entity';
 import { UserRole } from '../iam/entities/user-role.entity';
 import { IamService } from '../iam/iam.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+
+const MAX_ORGANIZATIONS_PER_USER = 3;
 
 @Injectable()
 export class OrganizationsService {
@@ -18,6 +20,20 @@ export class OrganizationsService {
     ) { }
 
     async create(userId: string | null, createDto: CreateOrganizationDto): Promise<Company> {
+        // Business Rule: Limit number of organizations per user
+        if (userId) {
+            const count = await this.userRoleRepository.createQueryBuilder('ur')
+                .innerJoin('ur.company', 'c')
+                .where('ur.userId = :userId', { userId })
+                // Assuming we want to count only ACTIVE organizations
+                .andWhere('c.status = :status', { status: 'ACTIVE' })
+                .getCount();
+
+            if (count >= MAX_ORGANIZATIONS_PER_USER) {
+                throw new BadRequestException(`Has alcanzado el número máximo de organizaciones permitidas (${MAX_ORGANIZATIONS_PER_USER}).`);
+            }
+        }
+
         const { name, logoUrl } = createDto;
 
         // Slug Logic
@@ -81,7 +97,9 @@ export class OrganizationsService {
     }
 
     async findAll(): Promise<Company[]> {
-        return this.companyRepository.find();
+        return this.companyRepository.find({
+            where: { status: CompanyStatus.ACTIVE },
+        });
     }
 
     async findOne(id: string): Promise<Company> {
@@ -100,5 +118,32 @@ export class OrganizationsService {
 
         Object.assign(company, updateDto);
         return this.companyRepository.save(company);
+    }
+
+    async suspendOrganization(organizationId: string, performedByUserId: string): Promise<Company> {
+        const company = await this.findOne(organizationId);
+
+        company.status = CompanyStatus.SUSPENDED;
+        company.suspendedAt = new Date();
+        company.suspendedByUserId = performedByUserId;
+
+        return this.companyRepository.save(company);
+    }
+
+    async restoreOrganization(organizationId: string): Promise<Company> {
+        const company = await this.companyRepository.findOne({ where: { id: organizationId } });
+        if (!company) throw new NotFoundException('Organization not found');
+
+        company.status = CompanyStatus.ACTIVE;
+        company.suspendedAt = null;
+        company.suspendedByUserId = null;
+
+        return this.companyRepository.save(company);
+    }
+
+    async getSuspendedOrganizations(): Promise<Company[]> {
+        return this.companyRepository.find({
+            where: { status: CompanyStatus.SUSPENDED },
+        });
     }
 }

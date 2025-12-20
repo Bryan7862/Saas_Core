@@ -28,4 +28,9 @@ export class OrganizationsController {
     update(@Param('id') id: string, @Body() updateOrganizationDto: UpdateOrganizationDto) {
         return this.organizationsService.update(id, updateOrganizationDto);
     }
+
+    @Delete(':id')
+    suspend(@Param('id') id: string, @Request() req) {
+        return this.organizationsService.suspendOrganization(id, req.user.userId);
+    }
 }

@@ -23,6 +23,12 @@ export class Company {
     @Column({ type: 'enum', enum: CompanyStatus, default: CompanyStatus.ACTIVE })
     status: CompanyStatus;
 
+    @Column({ name: 'suspended_at', type: 'timestamp', nullable: true })
+    suspendedAt: Date | null;
+
+    @Column({ name: 'suspended_by', type: 'uuid', nullable: true })
+    suspendedByUserId: string | null;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

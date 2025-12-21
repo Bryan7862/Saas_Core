@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -9,13 +8,10 @@ import {
     Bell,
     Search,
     Menu,
-    ChevronDown
+    ChevronDown,
+    Building2,
+    Trash2
 } from 'lucide-react';
-=======
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, Building2, Trash2 } from 'lucide-react';
->>>>>>> origin/master
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
@@ -27,26 +23,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
     const handleLogout = () => {
         // Here you would clear tokens, etc.
+        localStorage.removeItem('access_token');
         navigate('/login');
     };
 
     const navItems = [
-<<<<<<< HEAD
         { path: '/', label: 'Panel de Control', icon: LayoutDashboard },
+        { path: '/organizations', label: 'Organizaciones', icon: Building2 },
         { path: '/users', label: 'Miembros', icon: Users },
+        { path: '/trash', label: 'Papelera', icon: Trash2 },
     ];
 
     const configItems = [
         { label: 'General', path: '/settings/general' },
         { label: 'Facturación', path: '/settings/billing' },
         { label: 'Organizaciones', path: '/settings/orgs' },
-=======
-        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/organizations', label: 'Organizations', icon: Building2 },
-        { path: '/users', label: 'Users', icon: Users },
-        // { path: '/roles', label: 'Roles', icon: Shield },
-        { path: '/trash', label: 'Recycle Bin', icon: Trash2 },
->>>>>>> origin/master
     ];
 
     return (

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { UserPlus, Users, Shield, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { UserPlus, Users, Trash2 } from 'lucide-react';
 import { getUsers } from '../api';
 import { RoleBadge } from '../components/RoleBadge';
 import { CreateRoleModal } from '../components/CreateRoleModal';
@@ -9,7 +9,7 @@ import { api } from '../../../lib/api'; // Using default axios instance for Crea
 export const UsersPage = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '' });
+    const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '', defaultCompanyId: '' });
     const [error, setError] = useState<string | null>(null);
 
     // Modals
@@ -63,7 +63,7 @@ export const UsersPage = () => {
             };
 
             await api.post('/admin/auth/users', payload); // Ensure correct endpoint path
-            setFormData({ email: '', password: '', firstName: '', lastName: '' });
+            setFormData({ email: '', password: '', firstName: '', lastName: '', defaultCompanyId: '' });
             loadUsers();
             alert('User created successfully');
         } catch (err: any) {
@@ -136,12 +136,8 @@ export const UsersPage = () => {
                             <input
                                 type="email"
                                 required
-<<<<<<< HEAD
                                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-=======
-                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 placeholder="john@company.com"
->>>>>>> origin/master
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
@@ -158,33 +154,27 @@ export const UsersPage = () => {
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             />
                         </div>
-<<<<<<< HEAD
                         <div>
                             <label className="block text-sm font-medium text-[var(--muted)] mb-1">Default Company ID (UUID)</label>
                             <input
                                 type="text"
                                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                placeholder="Optional"
+                                placeholder="Optional - auto-filled from current context"
                                 value={formData.defaultCompanyId}
                                 onChange={(e) => setFormData({ ...formData, defaultCompanyId: e.target.value })}
                             />
+                            <div className="text-xs text-gray-400 mt-1">
+                                Creating user for current organization context.
+                            </div>
                         </div>
                         <button type="submit" disabled={loading} className="w-full bg-[var(--primary)] text-white py-2 rounded hover:opacity-90 transition-opacity font-medium">
-=======
-                        {/* Hidden Company ID - Auto-filled from context */}
-                        <div className="text-xs text-gray-400 mt-1">
-                            Creating user for current organization context.
-                        </div>
-
-                        <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white py-2 rounded hover:bg-slate-800 transition-colors">
->>>>>>> origin/master
                             Create User
                         </button>
                     </form>
                 </div>
 
                 {/* Role Management Actions */}
-                <div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)] flex flex-col justify-center items-center text-center">
+                < div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)] flex flex-col justify-center items-center text-center" >
                     <div className="mb-4">
                         <h2 className="text-xl font-bold mb-2 text-[var(--text)]">Gestión de Roles</h2>
                         <p className="text-[var(--muted)]">Definir nuevos roles para la organización.</p>
@@ -195,11 +185,11 @@ export const UsersPage = () => {
                     >
                         <span>+ Nueva Definición de Rol</span>
                     </button>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Users List */}
-            <div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)]">
+            < div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)]" >
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
                         <Users size={20} />
@@ -237,60 +227,48 @@ export const UsersPage = () => {
                                             {(!user.userRoles || user.userRoles.length === 0) && <span className="text-[var(--muted)] text-xs italic">No roles</span>}
                                         </div>
                                     </td>
-<<<<<<< HEAD
                                     <td className="py-3 px-4">
-                                        <button
-                                            onClick={() => handleEditClick(user)}
-                                            className="text-[var(--primary)] hover:underline font-medium text-sm"
-                                        >
-                                            Edit Roles
-                                        </button>
-=======
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => {
-                                                    setSelectedUser(user);
-                                                    setIsEditRoleOpen(true);
-                                                }}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                                title="Edit Roles"
+                                                onClick={() => handleEditClick(user)}
+                                                className="text-[var(--primary)] hover:underline font-medium text-sm"
                                             >
                                                 Edit Roles
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteUser(user.id)}
-                                                className="text-red-600 hover:text-red-900"
+                                                className="text-red-500 hover:text-red-700 p-1"
                                                 title="Suspend User"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
->>>>>>> origin/master
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div >
 
             {/* Modals */}
-            <CreateRoleModal
+            < CreateRoleModal
                 isOpen={isCreateRoleOpen}
                 onClose={() => setIsCreateRoleOpen(false)}
                 onRoleCreated={() => alert('Role definition created!')}
             />
 
-            {selectedUser && (
-                <EditUserRoleModal
-                    isOpen={isEditRoleOpen}
-                    onClose={() => setIsEditRoleOpen(false)}
-                    userId={selectedUser.id}
-                    currentUserRoles={selectedUser.userRoles?.map((ur: any) => ur.role.code) || []}
-                    onRoleUpdated={handleRoleUpdated}
-                />
-            )}
-        </div>
+            {
+                selectedUser && (
+                    <EditUserRoleModal
+                        isOpen={isEditRoleOpen}
+                        onClose={() => setIsEditRoleOpen(false)}
+                        userId={selectedUser.id}
+                        currentUserRoles={selectedUser.userRoles?.map((ur: any) => ur.role.code) || []}
+                        onRoleUpdated={handleRoleUpdated}
+                    />
+                )
+            }
+        </div >
     );
 };

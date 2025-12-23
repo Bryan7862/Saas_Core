@@ -8,7 +8,9 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+        rawBody: true, // Needed for Stripe Webhook Signature verification
+    });
     const configService = app.get(ConfigService);
 
     // Security & Optimization

@@ -38,6 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         { label: 'General', path: '/settings/general' },
         { label: 'Facturación', path: '/settings/billing' },
         { label: 'Organizaciones', path: '/settings/orgs' },
+        { label: 'Suscripción', path: '/pricing' },
     ];
 
     return (

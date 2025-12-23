@@ -6,6 +6,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { IamModule } from './modules/iam/iam.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { TrashModule } from './modules/trash/trash.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
     imports: [
@@ -20,7 +22,7 @@ import { TrashModule } from './modules/trash/trash.module';
                 port: configService.get<number>('DB_PORT'),
                 username: configService.get<string>('DB_USERNAME'),
                 password: configService.get<string>('DB_PASSWORD'),
-                database: configService.get<string>('DB_DATABASE') || configService.get<string>('DB_NAME'), // ← CAMBIO AQUÍ
+                database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'), // Support both naming conventions
                 autoLoadEntities: true,
                 synchronize: configService.get<string>('NODE_ENV') === 'development',
             }),
@@ -30,6 +32,8 @@ import { TrashModule } from './modules/trash/trash.module';
         IamModule,
         OrganizationsModule,
         TrashModule,
+        SubscriptionsModule,
+        PaymentsModule,
     ],
 })
 export class AppModule implements NestModule {

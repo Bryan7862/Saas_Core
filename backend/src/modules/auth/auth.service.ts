@@ -8,8 +8,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { IamService } from '../iam/iam.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { SubscriptionStatus } from '../subscriptions/enums/subscription-status.enum';
 
-const MAX_USERS_PER_ORGANIZATION = 8;
+// const MAX_USERS_PER_ORGANIZATION = 8; // Removed hardcoded limit
 
 @Injectable()
 export class AuthService {
@@ -18,6 +20,7 @@ export class AuthService {
         private userRepository: Repository<User>,
         private readonly organizationsService: OrganizationsService,
         private readonly iamService: IamService,
+        private readonly subscriptionsService: SubscriptionsService,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -73,9 +76,25 @@ export class AuthService {
         const { email, password, defaultCompanyId, firstName, lastName } = createUserDto;
 
         if (defaultCompanyId) {
+            // 1. Get current Subscription
+            const subscription = await this.subscriptionsService.getCurrentSubscription(defaultCompanyId);
+
+            // 2. Check if subscription allows adding users
+            if (subscription.status === SubscriptionStatus.CANCELED || subscription.status === SubscriptionStatus.SUSPENDED) {
+                throw new BadRequestException('La suscripción de la organización no está activa. Por favor actualice su plan.');
+            }
+
+            // 3. Check Trial Expiration
+            if (subscription.status === SubscriptionStatus.TRIAL && subscription.endsAt && new Date() > subscription.endsAt) {
+                throw new BadRequestException('Su periodo de prueba ha finalizado. Por favor suscríbase a un plan para agregar más usuarios.');
+            }
+
+            // 4. Check Limits
             const currentUsersCount = await this.iamService.countCompanyUsers(defaultCompanyId);
-            if (currentUsersCount >= MAX_USERS_PER_ORGANIZATION) {
-                throw new BadRequestException(`Has alcanzado el número máximo de usuarios permitidos para esta organización (${MAX_USERS_PER_ORGANIZATION}).`);
+            const { maxUsers } = this.subscriptionsService.getPlanLimits(subscription.planCode, subscription.status);
+
+            if (currentUsersCount >= maxUsers) {
+                throw new BadRequestException(`Has alcanzado el límite de usuarios de tu plan (${maxUsers}). Actualiza tu plan para agregar más.`);
             }
         }
 

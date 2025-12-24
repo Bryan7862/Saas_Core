@@ -34,11 +34,9 @@ export function SettingsPage() {
 
                         <div>
                             <label className="block text-sm font-medium text-muted mb-1">Zona Horaria</label>
-                            <select className="w-full px-4 py-2 rounded-lg border border-border bg-input text-text focus:outline-none focus:ring-2 focus:ring-primary/20">
-                                <option>America/New_York (GMT-5)</option>
-                                <option>Europe/London (GMT+0)</option>
-                                <option>Asia/Tokyo (GMT+9)</option>
-                            </select>
+                            <div className="w-full px-4 py-2 rounded-lg border border-border bg-input text-text">
+                                America/Lima (GMT-5) - Perú
+                            </div>
                         </div>
                     </div>
                 </div>

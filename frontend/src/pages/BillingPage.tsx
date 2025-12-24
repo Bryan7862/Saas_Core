@@ -10,7 +10,7 @@ export function BillingPage() {
                 <div className="bg-[var(--card-bg)] p-6 rounded-xl border border-[var(--border)] shadow-sm">
                     <h3 className="text-lg font-medium text-[var(--text)] mb-4">Tu Plan Actual</h3>
                     <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-4xl font-bold text-[var(--text)]">$29</span>
+                        <span className="text-4xl font-bold text-[var(--text)]">S/ 29</span>
                         <span className="text-[var(--muted)]">/ mes</span>
                     </div>
                     <p className="text-[var(--primary)] font-medium mb-6">Plan Pro (Anual)</p>
@@ -68,30 +68,35 @@ export function BillingPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
-                            {[
-                                { date: '01 Ene 2026', amount: '$29.00', status: 'Pagado' },
-                                { date: '01 Dic 2025', amount: '$29.00', status: 'Pagado' },
-                                { date: '01 Nov 2025', amount: '$29.00', status: 'Pagado' },
-                            ].map((invoice, i) => (
-                                <tr key={i} className="hover:bg-[var(--bg-primary)] transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)] flex items-center gap-2">
-                                        <Clock size={16} className="text-[var(--muted)]" />
-                                        {invoice.date}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[var(--text)]">{invoice.amount}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                            {invoice.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--primary)]">
-                                        <button className="flex items-center gap-1 hover:underline">
-                                            <Download size={16} />
-                                            PDF
-                                        </button>
+                            {/* Historial vacío para usuario nuevo */}
+                            {[].length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-[var(--muted)]">
+                                        No tienes facturas en tu historial.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                [].map((invoice: any, i) => (
+                                    <tr key={i} className="hover:bg-[var(--bg-primary)] transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)] flex items-center gap-2">
+                                            <Clock size={16} className="text-[var(--muted)]" />
+                                            {invoice.date}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[var(--text)]">{invoice.amount}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                {invoice.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--primary)]">
+                                            <button className="flex items-center gap-1 hover:underline">
+                                                <Download size={16} />
+                                                PDF
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

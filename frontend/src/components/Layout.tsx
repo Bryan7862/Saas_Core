@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -18,6 +18,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [configOpen, setConfigOpen] = useState(false);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [userName, setUserName] = useState('Admin');
+    const [userEmail, setUserEmail] = useState('admin@gym.com');
+
+    // Cargar datos del perfil desde localStorage
+    useEffect(() => {
+        const loadProfileData = () => {
+            const savedImage = localStorage.getItem('profileImage');
+            const savedProfile = localStorage.getItem('userProfile');
+
+            if (savedImage) {
+                setProfileImage(savedImage);
+            }
+
+            if (savedProfile) {
+                const profile = JSON.parse(savedProfile);
+                if (profile.nombre && profile.apellido) {
+                    setUserName(`${profile.nombre} ${profile.apellido}`);
+                }
+                if (profile.email) {
+                    setUserEmail(profile.email);
+                }
+            }
+        };
+
+        loadProfileData();
+
+        // Escuchar cambios en localStorage
+        const handleStorageChange = () => {
+            loadProfileData();
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        // También escuchar un evento personalizado para cambios locales
+        window.addEventListener('profileUpdated', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('profileUpdated', handleStorageChange);
+        };
+    }, [location]); // Re-cargar cuando cambie la ubicación
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -64,12 +106,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="p-6">
                     <div className="flex items-center gap-4 mb-1">
                         <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center overflow-hidden border border-border">
-                            {/* Placeholder Avatar - replace with img tag if needed */}
-                            <Users className="w-6 h-6 text-muted" />
+                            {profileImage ? (
+                                <img src={profileImage} alt="Avatar" className="w-12 h-12 object-cover" />
+                            ) : (
+                                <Users className="w-6 h-6 text-muted" />
+                            )}
                         </div>
                         <div>
-                            <h3 className="font-bold text-text leading-tight">Admin</h3>
-                            <p className="text-xs text-muted">admin@gym.com</p>
+                            <h3 className="font-bold text-text leading-tight">{userName}</h3>
+                            <p className="text-xs text-muted">{userEmail}</p>
                         </div>
                     </div>
                 </div>

@@ -8,6 +8,7 @@ export interface Subscription {
     amount?: number; // Only for UI display if needed
     currency?: string;
     interval?: string;
+    endsAt?: string;
 }
 
 export const getCurrentSubscription = async (): Promise<Subscription> => {

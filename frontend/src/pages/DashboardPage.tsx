@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getTransactions, createTransaction, Transaction } from '../modules/dashboard/api';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -103,65 +104,141 @@ export function DashboardPage() {
     };
 
     const getMonthName = (dateStr: string) => {
+        if (!dateStr) return 'Desconocido';
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return 'Desconocido';
+
         // Ajuste para zona horaria local si es necesario, pero para nombres de mes simples:
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        return months[date.getUTCMonth()]; // Usar UTC para evitar problemas de timezone con strings YYYY-MM-DD
+        return months[date.getUTCMonth()];
     };
 
-    const handleAddIngresoGasto = () => {
-        if (formData.date && formData.amount) {
-            const amount = parseFloat(formData.amount) || 0;
-            const monthName = getMonthName(formData.date);
-            const isIngreso = formData.type === 'ingreso';
+    const [loading, setLoading] = useState(true);
 
-            setDataArea(prev => {
-                const newData = [...prev];
-                const existingIndex = newData.findIndex(d => d.name === monthName);
-
-                if (existingIndex >= 0) {
-                    if (isIngreso) newData[existingIndex].ingresos += amount;
-                    else newData[existingIndex].gastos += amount;
-                } else {
-                    newData.push({
-                        name: monthName,
-                        ingresos: isIngreso ? amount : 0,
-                        gastos: isIngreso ? 0 : amount
-                    });
-                    // Ordenar por meses (simplificado)
-                    // En una app real usaríamos fechas completas para ordenar
-                }
-                return newData;
-            });
-
-            // Actualizar KPI si es Ingreso (opcional, para coherencia)
-            if (isIngreso) {
-                setKpis(prev => ({ ...prev, ingresos: prev.ingresos + amount }));
-            }
-
-            setShowAddDataModal(false);
+    const loadData = async () => {
+        try {
+            const txs = await getTransactions();
+            // setTransactions(txs); // Removed unused state
+            processChartData(txs);
+        } catch (error) {
+            console.error("Failed to load transactions", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleAddVenta = () => {
-        if (formData.category && formData.amount) {
-            const amount = parseFloat(formData.amount) || 0;
+    useEffect(() => {
+        loadData();
+    }, []);
 
-            setDataBar(prev => {
-                const newData = [...prev];
-                const existingIndex = newData.findIndex(d => d.name === formData.category);
+    // ... processChartData ...
 
-                if (existingIndex >= 0) {
-                    newData[existingIndex].ventas += amount;
-                } else {
-                    newData.push({
-                        name: formData.category,
-                        ventas: amount
-                    });
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center text-[var(--muted)]">
+                <div className="animate-pulse">Cargando dashboard...</div>
+            </div>
+        );
+    }
+
+    const processChartData = (txs: Transaction[]) => {
+        const monthsData = new Map<string, { name: string, ingresos: number, gastos: number, monthId: number }>();
+        const categoryMap = new Map<string, number>();
+
+        txs.forEach(tx => {
+            // Area Chart Processing
+            const date = new Date(tx.date);
+            // Ignore invalid dates
+            if (isNaN(date.getTime())) return;
+
+            const monthName = getMonthName(tx.date);
+            const monthId = date.getUTCMonth(); // 0-11
+            const key = `${date.getUTCFullYear()}-${monthId}`; // Unique key per month/year
+
+            if (!monthsData.has(key)) {
+                monthsData.set(key, { name: monthName, ingresos: 0, gastos: 0, monthId });
+            }
+
+            const monthEntry = monthsData.get(key)!;
+            if (tx.type === 'ingreso') {
+                monthEntry.ingresos += Number(tx.amount);
+            } else {
+                monthEntry.gastos += Number(tx.amount);
+            }
+
+            // Category Processing (simplified logic - assuming category field used for sales too or strictly sales)
+            // If the user uses "Venta" modal, it sends type='ingreso' usually, but let's assume specific logic or category field usage
+            if (tx.category) {
+                const current = categoryMap.get(tx.category) || 0;
+                // Sum strict amounts regardless of type? Or only income? Let's sum income for "Sales"
+                if (tx.type === 'ingreso') {
+                    categoryMap.set(tx.category, current + Number(tx.amount));
                 }
-                return newData;
-            });
-            setShowAddDataModal(false);
+            }
+        });
+
+        // Convert Map to Array and Sort
+        const monthsOrder = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const areaResult = Array.from(monthsData.values()).sort((a, b) => {
+            // Simple sort by month index
+            return monthsOrder.indexOf(a.name) - monthsOrder.indexOf(b.name);
+        });
+
+        const barResult = Array.from(categoryMap.entries()).map(([name, ventas]) => ({ name, ventas }));
+
+        setDataArea(areaResult);
+        setDataBar(barResult);
+
+        // Update total ingresos KPI from processed data
+        setKpis(prev => ({ ...prev, ingresos: areaResult.reduce((sum, d) => sum + d.ingresos, 0) }));
+    };
+
+    const handleAddIngresoGasto = async () => {
+        if (formData.date && formData.amount) {
+            try {
+                const payload = {
+                    date: formData.date,
+                    type: formData.type as 'ingreso' | 'gasto',
+                    amount: parseFloat(formData.amount),
+                    description: formData.description,
+                    category: 'General'
+                };
+                console.log("Sending transaction:", payload); // Debug log
+
+                await createTransaction(payload);
+
+                await loadData();
+                setShowAddDataModal(false);
+            } catch (error: any) {
+                console.error("Error creating transaction", error);
+                const msg = error.response?.data?.message || error.message || "Error desconocido";
+                alert(`Error al guardar: ${Array.isArray(msg) ? msg.join(', ') : msg}`);
+            }
+        } else {
+            alert("Por favor completa la fecha y el monto");
+        }
+    };
+
+    const handleAddVenta = async () => {
+        if (formData.category && formData.amount) {
+            try {
+                const payload = {
+                    date: formData.date,
+                    type: 'ingreso' as const, // Salesforce bug fix: forced literal type
+                    amount: parseFloat(formData.amount),
+                    description: formData.description || 'Venta',
+                    category: formData.category
+                };
+                console.log("Sending sale:", payload);
+
+                await createTransaction(payload);
+                await loadData();
+                setShowAddDataModal(false);
+            } catch (error: any) {
+                console.error("Error creating sale", error);
+                const msg = error.response?.data?.message || error.message || "Error desconocido";
+                alert(`Error al guardar venta: ${Array.isArray(msg) ? msg.join(', ') : msg}`);
+            }
         }
     };
 
@@ -176,24 +253,6 @@ export function DashboardPage() {
         }
     };
 
-    const handleGenerateReport = () => {
-        // Generar CSV simple
-        const headers = ['Mes', 'Ingresos', 'Gastos'];
-        const rows = dataArea.map(d => [d.name, d.ingresos, d.gastos]);
-
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + headers.join(",") + "\n"
-            + rows.map(e => e.join(",")).join("\n");
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "reporte_financiero.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     const totalIngresos = kpis.ingresos > 0 ? kpis.ingresos : dataArea.reduce((sum, d) => sum + d.ingresos, 0);
     // Mostrar el total de área o el KPI, dependiendo de uso. 
     // Para consistencia con el modal KPI, usamos el KPI si se setea manualmente, o sumamos si se agregan transacciones.
@@ -201,9 +260,9 @@ export function DashboardPage() {
     const totalVentas = dataBar.reduce((sum, d) => sum + d.ventas, 0);
 
     return (
-        <div className="space-y-8">
+        <div className="h-full flex flex-col overflow-y-auto gap-6 pr-2">
             {/* 1. KPIs Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 flex-none">
                 <KpiCard
                     title="Ingresos del Mes"
                     value={`S/ ${displayIngresos.toLocaleString()}`}
@@ -391,10 +450,10 @@ export function DashboardPage() {
             <div>
                 <h3 className="text-lg font-bold text-[var(--text)] mb-4">Accesos Rápidos</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <QuickAction icon={Plus} label="Crear Factura" to="/invoices/new" />
-                    <QuickAction icon={UserPlus} label="Añadir Cliente" to="/users" />
-                    <QuickAction icon={Package} label="Nuevo Producto" to="/settings/general" />
-                    <QuickAction icon={FilePlus} label="Generar Reporte" onClick={handleGenerateReport} />
+                    <QuickAction icon={Plus} label="Nueva Venta" to="/sales/pos" />
+                    <QuickAction icon={UserPlus} label="Añadir Cliente" to="/clients/new" />
+                    <QuickAction icon={Package} label="Nuevo Producto" to="/inventory/products" />
+                    <QuickAction icon={FilePlus} label="Reportes" to="/reports/sales" />
                 </div>
             </div>
 

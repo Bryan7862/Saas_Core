@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserStatus } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { IamService } from '../iam/iam.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
@@ -228,6 +229,14 @@ export class AuthService {
         };
     }
 
+    async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        Object.assign(user, updateProfileDto);
+        return this.userRepository.save(user);
+    }
+
     async getUserWithRoles(userId: string) {
         const user = await this.userRepository.findOne({
             where: { id: userId },
@@ -240,6 +249,14 @@ export class AuthService {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            bio: user.bio,
+            phone: user.phone,
+            address: user.address,
+            department: user.department,
+            province: user.province,
+            district: user.district,
+            website: user.website,
+            socialLinks: user.socialLinks,
             defaultCompanyId: user.defaultCompanyId,
             roles: user.userRoles.map(ur => ur.role.code), // Flatten to ['ADMIN', 'OWNER']
         };

@@ -18,6 +18,30 @@ export class User {
     @Column({ name: 'last_name', nullable: true })
     lastName: string;
 
+    @Column({ type: 'text', nullable: true })
+    bio: string;
+
+    @Column({ nullable: true })
+    phone: string;
+
+    @Column({ nullable: true })
+    address: string;
+
+    @Column({ nullable: true })
+    department: string;
+
+    @Column({ nullable: true })
+    province: string;
+
+    @Column({ nullable: true })
+    district: string;
+
+    @Column({ nullable: true })
+    website: string;
+
+    @Column({ type: 'json', nullable: true, name: 'social_links' })
+    socialLinks: Record<string, string>;
+
     @Column({ unique: true })
     email: string;
 

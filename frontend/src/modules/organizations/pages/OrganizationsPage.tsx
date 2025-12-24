@@ -65,10 +65,10 @@ export const OrganizationsPage = () => {
     if (loading) return <div className="p-8 text-center text-[var(--text)]">Loading your organizations...</div>;
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl w-full space-y-8">
-                <div className="text-center">
-                    <h2 className="mt-6 text-3xl font-extrabold text-[var(--text)]">
+        <div className="h-full flex flex-col items-center py-4 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl w-full h-full flex flex-col space-y-6">
+                <div className="text-center flex-none">
+                    <h2 className="mt-2 text-3xl font-extrabold text-[var(--text)]">
                         Mis Organizaciones
                     </h2>
                     <p className="mt-2 text-sm text-[var(--muted)]">
@@ -76,7 +76,7 @@ export const OrganizationsPage = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-4">
                     {/* Create New Card */}
                     <div
                         onClick={() => setShowCreate(true)}

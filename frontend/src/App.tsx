@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 // import { RolesPage } from './pages/RolesPage'; // Deprecated
@@ -7,10 +7,11 @@ import { OrganizationsPage } from './modules/organizations/pages/OrganizationsPa
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 import { TrashPage } from './modules/trash/pages/TrashPage';
+import { ConstructionPage } from './pages/ConstructionPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
-import { BillingPage } from './pages/BillingPage';
-import { CreateInvoicePage } from './pages/CreateInvoicePage';
+// import { BillingPage } from './pages/BillingPage';
+// import { CreateInvoicePage } from './pages/CreateInvoicePage';
 import { PricingPage } from './modules/subscriptions/pages/PricingPage';
 import { RequireAuth } from './components/RequireAuth';
 import { ThemeProvider } from './context/ThemeContext';
@@ -30,17 +31,25 @@ function App() {
                                     <Routes>
                                         <Route path="/" element={<DashboardPage />} />
                                         {/* <Route path="/roles" element={<RolesPage />} /> */}
-                                        <Route path="/users" element={<UsersPage />} />
-                                        <Route path="/organizations" element={<OrganizationsPage />} />
-                                        <Route path="/trash" element={<TrashPage />} />
+                                        {/* New Sidebar Routes */}
+                                        <Route path="/sales/*" element={<ConstructionPage title="Ventas & POS" />} />
+                                        <Route path="/inventory/*" element={<ConstructionPage title="Gestión de Inventario" />} />
+                                        <Route path="/clients/*" element={<ConstructionPage title="Gestión de Clientes" />} />
+                                        <Route path="/suppliers/*" element={<ConstructionPage title="Proveedores" />} />
+                                        <Route path="/reports/*" element={<ConstructionPage title="Reportes y Analíticas" />} />
+                                        <Route path="/billing/*" element={<ConstructionPage title="Facturación Electrónica" />} />
 
-                                        {/* New Functional Routes */}
-                                        <Route path="/profile" element={<ProfilePage />} />
+                                        {/* Settings Routes */}
                                         <Route path="/settings/general" element={<SettingsPage />} />
-                                        <Route path="/settings/billing" element={<BillingPage />} />
-                                        <Route path="/settings/orgs" element={<OrganizationsPage />} />
-                                        <Route path="/invoices/new" element={<CreateInvoicePage />} />
+                                        <Route path="/settings/*" element={<ConstructionPage title="Configuración" />} />
+
+                                        {/* Legacy/Existing Routes */}
+                                        <Route path="/organizations" element={<OrganizationsPage />} />
+                                        <Route path="/users" element={<UsersPage />} />
+                                        <Route path="/profile" element={<ProfilePage />} />
                                         <Route path="/pricing" element={<PricingPage />} />
+                                        <Route path="/trash" element={<TrashPage />} />
+                                        <Route path="*" element={<Navigate to="/" replace />} />
                                     </Routes>
                                 </Layout>
                             </RequireAuth>

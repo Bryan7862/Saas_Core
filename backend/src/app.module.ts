@@ -7,6 +7,7 @@ import { IamModule } from './modules/iam/iam.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { TrashModule } from './modules/trash/trash.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
         OrganizationsModule,
         TrashModule,
         SubscriptionsModule,
+        TransactionsModule,
         PaymentsModule,
     ],
 })

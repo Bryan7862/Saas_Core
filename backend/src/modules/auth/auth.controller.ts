@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Headers, Req, UseGuards, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Headers, Req, UseGuards, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('admin/auth')
@@ -36,6 +37,12 @@ export class AuthController {
     @Get('profile')
     getProfile(@Req() req) {
         return this.authService.getUserWithRoles(req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch('profile')
+    updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
+        return this.authService.updateProfile(req.user.userId, updateProfileDto);
     }
 
     // New Endpoint for Global Admin

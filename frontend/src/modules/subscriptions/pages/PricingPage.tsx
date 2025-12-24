@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getCurrentSubscription, createPaymentOrder, Subscription } from '../api';
 
 const PLANS = [
@@ -7,16 +7,16 @@ const PLANS = [
         name: 'Básico',
         price: 'S/ 50',
         period: '/mes',
-        features: ['Hasta 5 Usuarios', 'Facturación', 'Soporte Email'],
-        color: 'bg-blue-100 text-blue-800',
+        features: ['Hasta 1 Usuario', 'Facturación', 'Soporte Email'],
+        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
     },
     {
         code: 'PRO',
         name: 'Pro',
         price: 'S/ 100',
         period: '/mes',
-        features: ['Hasta 8 Usuarios', 'Productos Ilimitados', 'Acceso API', 'Soporte Prioritario'],
-        color: 'bg-purple-100 text-purple-800',
+        features: ['Hasta 5 Usuarios', 'Productos Ilimitados', 'Acceso API', 'Soporte Prioritario'],
+        color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200',
         primary: true,
     },
     {
@@ -24,8 +24,8 @@ const PLANS = [
         name: 'Max',
         price: 'S/ 200',
         period: '/mes',
-        features: ['Hasta 15 Usuarios', 'Todo lo de PRO', 'Soporte VIP', 'Auditoría Avanzada'],
-        color: 'bg-red-100 text-red-800',
+        features: ['Hasta 20 Usuarios', 'Todo lo de PRO', 'Soporte VIP', 'Auditoría Avanzada'],
+        color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
     },
 ];
 
@@ -129,13 +129,13 @@ export const PricingPage = () => {
     const trialDays = isTrial ? getDaysRemaining(currentSub?.endsAt) : 0;
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
+        <div className="h-full overflow-y-auto p-4 sm:p-8 max-w-7xl mx-auto">
             <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Planes flexibles para tu crecimiento</h1>
-                <p className="text-gray-600">Elige el plan que mejor se adapte a tu equipo.</p>
+                <h1 className="text-3xl font-bold text-[var(--text)] mb-4">Planes flexibles para tu crecimiento</h1>
+                <p className="text-[var(--muted)]">Elige el plan que mejor se adapte a tu equipo.</p>
 
                 {isTrial && (
-                    <div className="mt-4 inline-block bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+                    <div className="mt-4 inline-block bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-200 p-4" role="alert">
                         <p className="font-bold">Modo de Prueba Activo</p>
                         <p>Te quedan {trialDays} días de prueba gratuita. Elige un plan para no perder acceso.</p>
                     </div>
@@ -151,7 +151,7 @@ export const PricingPage = () => {
                     return (
                         <div
                             key={plan.code}
-                            className={`relative p-8 bg-white border rounded-2xl shadow-sm flex flex-col transition-transform hover:scale-105 ${plan.primary ? 'ring-2 ring-indigo-500 border-transparent' : 'border-gray-200'
+                            className={`relative p-8 bg-[var(--card-bg)] border rounded-2xl shadow-sm flex flex-col transition-transform hover:scale-105 ${plan.primary ? 'ring-2 ring-indigo-500 border-transparent' : 'border-[var(--border)]'
                                 }`}
                         >
                             {isCurrent && (
@@ -160,12 +160,12 @@ export const PricingPage = () => {
                                 </span>
                             )}
 
-                            <h3 className={`text-xl font-semibold ${plan.code === 'MAX' ? 'text-red-600' : 'text-gray-900'
+                            <h3 className={`text-xl font-semibold ${plan.code === 'MAX' ? 'text-red-500' : 'text-[var(--text)]'
                                 }`}>{plan.name}</h3>
 
-                            <div className="mt-4 flex items-baseline text-gray-900">
+                            <div className="mt-4 flex items-baseline text-[var(--text)]">
                                 <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
-                                {plan.period && <span className="ml-1 text-xl text-gray-500">{plan.period}</span>}
+                                {plan.period && <span className="ml-1 text-xl text-[var(--muted)]">{plan.period}</span>}
                             </div>
 
                             <ul className="mt-6 space-y-4 flex-1">
@@ -174,7 +174,7 @@ export const PricingPage = () => {
                                         <svg className="flex-shrink-0 w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                         </svg>
-                                        <span className="ml-3 text-gray-500">{feature}</span>
+                                        <span className="ml-3 text-[var(--muted)]">{feature}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -183,8 +183,8 @@ export const PricingPage = () => {
                                 onClick={() => !isDisabled && handleSubscribe(plan.code)}
                                 disabled={isDisabled}
                                 className={`mt-8 block w-full py-3 px-6 border border-transparent rounded-md text-center font-medium transition-colors ${isCurrent
-                                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
+                                    ? 'bg-[var(--bg-primary)] text-[var(--muted)] cursor-not-allowed'
+                                    : 'bg-[var(--primary)] text-white hover:opacity-90 shadow-md'
                                     }`}
                             >
                                 {processing === plan.code ? 'Cargando Culqi...' : isCurrent ? 'Tu Plan Actual' : 'Suscribirse'}

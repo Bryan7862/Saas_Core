@@ -89,12 +89,13 @@ export const UsersPage = () => {
     if (loading && users.length === 0) return <div>Loading...</div>;
 
     return (
-        <div className="space-y-8">
+        <div className="h-full flex flex-col gap-6 overflow-hidden">
             <h1 className="text-2xl font-bold text-[var(--text)]">Gestión de Usuarios</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-none">
                 {/* Create User Form */}
-                <div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)]">
+                <div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)] max-h-[600px] overflow-y-auto">
+                    {/* ... content ... */}
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-sky-500/10 rounded-lg text-sky-500">
                             <UserPlus size={20} />
@@ -189,14 +190,14 @@ export const UsersPage = () => {
             </div >
 
             {/* Users List */}
-            < div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)]" >
-                <div className="flex items-center gap-3 mb-6">
+            <div className="bg-[var(--card-bg)] p-6 rounded-lg shadow-sm border border-[var(--border)] flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="flex items-center gap-3 mb-4 flex-none">
                     <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
                         <Users size={20} />
                     </div>
                     <h2 className="text-xl font-bold text-[var(--text)]">Directorio de Usuarios</h2>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="flex-1 overflow-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-[var(--border)] text-[var(--muted)] text-sm">

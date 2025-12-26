@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -20,6 +20,7 @@ export class AuthService {
         @InjectRepository(User)
         private userRepository: Repository<User>,
         private readonly organizationsService: OrganizationsService,
+        @Inject(forwardRef(() => IamService))
         private readonly iamService: IamService,
         private readonly subscriptionsService: SubscriptionsService,
         private readonly jwtService: JwtService,
@@ -240,7 +241,7 @@ export class AuthService {
     async getUserWithRoles(userId: string) {
         const user = await this.userRepository.findOne({
             where: { id: userId },
-            relations: ['userRoles', 'userRoles.role'],
+            relations: ['userRoles', 'userRoles.role', 'userRoles.role.rolePermissions', 'userRoles.role.rolePermissions.permission'],
         });
         if (!user) return null;
 
@@ -258,7 +259,8 @@ export class AuthService {
             website: user.website,
             socialLinks: user.socialLinks,
             defaultCompanyId: user.defaultCompanyId,
-            roles: user.userRoles.map(ur => ur.role.code), // Flatten to ['ADMIN', 'OWNER']
+            roles: user.userRoles.map(ur => ur.role.code),
+            permissions: user.userRoles.flatMap(ur => ur.role.rolePermissions ? ur.role.rolePermissions.map(rp => rp.permission.code) : [])
         };
     }
 }

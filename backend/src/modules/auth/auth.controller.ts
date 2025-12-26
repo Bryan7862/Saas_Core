@@ -1,4 +1,6 @@
 import { Controller, Get, Post, Patch, Body, Param, Headers, Req, UseGuards, Delete } from '@nestjs/common';
+import { RequirePermissions } from '../iam/decorators/require-permissions.decorator';
+import { PermissionsGuard } from '../iam/guards/permissions.guard';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -15,7 +17,8 @@ export class AuthController {
         return this.authService.register(registerDto);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions('users:create')
     @Post('users')
     createUser(@Body() createUserDto: CreateUserDto) {
         return this.authService.createUser(createUserDto);
@@ -27,7 +30,8 @@ export class AuthController {
         return this.authService.login(user);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions('users:read')
     @Get('users')
     getUsers(@Req() req, @Headers('x-company-id') companyId: string) {
         return this.authService.getUsers(req.user.userId, companyId);
@@ -53,7 +57,8 @@ export class AuthController {
         return this.authService.getAllSystemUsers();
     }
 
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions('users:delete')
     @Delete('users/:id')
     suspendUser(@Param('id') id: string, @Req() req) {
         // In a real app, you might want to check if the requester has permission to suspend THIS user

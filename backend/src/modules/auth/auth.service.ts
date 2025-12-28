@@ -180,9 +180,39 @@ export class AuthService {
         return results;
     }
 
-    async suspendUser(userId: string, performedByUserId: string): Promise<User> {
+    async suspendUser(userId: string, performedByUserId: string, companyId?: string): Promise<User> {
+        // 1. Self-Protection Rule
+        if (userId === performedByUserId) {
+            throw new BadRequestException('No puedes suspender tu propia cuenta.');
+        }
+
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
+
+        // 2. Hierarchy & Context Rules (if company context is provided)
+        if (companyId) {
+            // Check if Target belongs to Company
+            const targetRole = await this.iamService.findUserRoleInCompany(userId, companyId);
+            if (!targetRole) {
+                // If the user is globally in the system but not in this company, strictly speaking we shouldn't be able to "suspend" them via this endpoint 
+                // if the intention is "Remove from Company". 
+                // But since 'suspendUser' sets global status, this is a dangerous endpoint for a multi-tenant app if not restricted.
+                // For now, assuming Global Suspension is the intent but gated by Hierarchy.
+
+                // If we want Tenant Isolation, we should probably block this if the user isn't in the company.
+                throw new BadRequestException('El usuario no pertenece a esta organización.');
+            }
+
+            // Check Actor Role
+            const actorRole = await this.iamService.findUserRoleInCompany(performedByUserId, companyId);
+
+            // Check Hierarchy: Only OWNER can touch OWNER
+            if (targetRole.role.code === 'OWNER') { // Assuming 'role' relation loaded
+                if (!actorRole || actorRole.role.code !== 'OWNER') {
+                    throw new BadRequestException('Solo un PROPIETARIO puede suspender a otro PROPIETARIO.');
+                }
+            }
+        }
 
         user.status = UserStatus.SUSPENDED;
         user.suspendedAt = new Date();

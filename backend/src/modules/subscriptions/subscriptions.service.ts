@@ -29,13 +29,31 @@ export class SubscriptionsService {
 
     getPlanLimits(planCode: PlanCode, status: SubscriptionStatus): { maxUsers: number } {
         if (status === SubscriptionStatus.TRIAL) return { maxUsers: 1 };
+        if (status === SubscriptionStatus.PAST_DUE) return { maxUsers: 1 }; // Downgrade access on failure
+        if (status === SubscriptionStatus.EXPIRED) return { maxUsers: 0 }; // Full block
 
         switch (planCode) {
             case PlanCode.BASIC: return { maxUsers: 5 };
             case PlanCode.PRO: return { maxUsers: 8 };
             case PlanCode.MAX: return { maxUsers: 15 };
-            default: return { maxUsers: 1 }; // Fallback (e.g. cancelled/suspended)
+            default: return { maxUsers: 1 };
         }
+    }
+
+    // ... (existing code)
+
+    // 4. Handle Failed Payment (Webhook Hook)
+    async handleFailedPayment(organizationId: string): Promise<Subscription> {
+        const sub = await this.getCurrentSubscription(organizationId);
+
+        // If it was ACTIVE, mark as PAST_DUE
+        if (sub.status === SubscriptionStatus.ACTIVE) {
+            sub.status = SubscriptionStatus.PAST_DUE;
+            // We do NOT modify endsAt, assuming grace period or immediate restriction relative to date.
+            // Or we could log the failure date.
+            return this.subscriptionRepository.save(sub);
+        }
+        return sub;
     }
 
     // 2. Get Current Subscription

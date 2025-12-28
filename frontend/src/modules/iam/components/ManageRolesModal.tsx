@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getRoles } from '../api';
+import { getRoles, deleteRole } from '../api';
 import { EditRoleModal } from './EditRoleModal';
 import { CreateRoleModal } from './CreateRoleModal';
 import { RoleBadge } from './RoleBadge';
@@ -30,6 +30,21 @@ export const ManageRolesModal: React.FC<Props> = ({ isOpen, onClose }) => {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (role: any) => {
+        if (!window.confirm(`¿Estás seguro de eliminar el rol "${role.name}"? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        try {
+            await deleteRole(role.id);
+            loadRoles(); // Refresh list
+        } catch (error: any) {
+            console.error('Failed to delete role', error);
+            const msg = error.response?.data?.message || 'Error al eliminar el rol';
+            alert(msg);
         }
     };
 
@@ -81,7 +96,12 @@ export const ManageRolesModal: React.FC<Props> = ({ isOpen, onClose }) => {
                                             </button>
                                             {/* Prevent deleting System roles */}
                                             {!['OWNER', 'ADMIN', 'MEMBER'].includes(role.code) && (
-                                                <button className="text-red-500 hover:text-red-700 text-sm">Eliminar</button>
+                                                <button
+                                                    onClick={() => handleDelete(role)}
+                                                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                                >
+                                                    Eliminar
+                                                </button>
                                             )}
                                         </td>
                                     </tr>

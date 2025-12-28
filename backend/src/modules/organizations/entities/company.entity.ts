@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from 'typeorm';
+import { OrganizationSettings } from './organization-settings.entity';
 
 export enum CompanyStatus {
     ACTIVE = 'ACTIVE',
@@ -34,4 +35,7 @@ export class Company {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    @OneToOne(() => OrganizationSettings, (settings) => settings.company)
+    settings: OrganizationSettings;
 }

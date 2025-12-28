@@ -114,14 +114,31 @@ export class IamService implements OnModuleInit {
         return this.permissionRepository.find();
     }
 
-    async assignRole(assignRoleDto: AssignRoleDto): Promise<UserRole> {
+    async assignRole(assignRoleDto: AssignRoleDto, actorId?: string): Promise<UserRole> {
         const { userId, roleId, companyId } = assignRoleDto;
+
+        // 0. SELF-MODIFICATION CHECK
+        if (actorId && userId === actorId) {
+            throw new BadRequestException('No puedes modificar tu propio rol. Pide a otro administrador que lo haga.');
+        }
 
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
         const newRole = await this.roleRepository.findOne({ where: { id: roleId } });
         if (!newRole) throw new NotFoundException('Role not found');
+
+        // HIERARCHY CHECK (If actor is executing)
+        if (actorId) {
+            const actorRole = await this.findUserRoleInCompany(actorId, companyId);
+
+            // 1. If trying to assign OWNER role, Actor MUST be OWNER
+            if (newRole.code === 'OWNER') {
+                if (!actorRole || actorRole.role.code !== 'OWNER') {
+                    throw new BadRequestException('Solo un Propietario (Owner) puede nombrar nuevos Owners.');
+                }
+            }
+        }
 
         // 1. Find ALL existing assignments for this company (to handle potential legacy duplicates)
         const existingAssignments = await this.userRoleRepository.find({
@@ -137,7 +154,16 @@ export class IamService implements OnModuleInit {
 
         // Check if ANY of the current roles is OWNER and we are removing it (by replacing with non-OWNER)
         const isCurrentlyOwner = existingAssignments.some(ur => ur.role.code === 'OWNER');
+
         if (isCurrentlyOwner && newRole.code !== 'OWNER') {
+            // HIERARCHY CHECK: Only Owner can demote Owner
+            if (actorId) {
+                const actorRole = await this.findUserRoleInCompany(actorId, companyId);
+                if (!actorRole || actorRole.role.code !== 'OWNER') {
+                    throw new BadRequestException('Solo un Propietario puede cambiar el rol de otro Propietario.');
+                }
+            }
+
             const ownerRole = await this.roleRepository.findOne({ where: { code: 'OWNER' } });
             if (ownerRole) {
                 const ownerCount = await this.userRoleRepository.count({
@@ -215,5 +241,30 @@ export class IamService implements OnModuleInit {
 
     async countCompanyUsers(companyId: string): Promise<number> {
         return this.userRoleRepository.count({ where: { companyId } });
+    }
+
+    async findUserRoleInCompany(userId: string, companyId: string): Promise<UserRole | null> {
+        return this.userRoleRepository.findOne({
+            where: { userId, companyId },
+            relations: ['role'],
+        });
+    }
+
+    async deleteRole(roleId: string): Promise<void> {
+        const role = await this.roleRepository.findOne({ where: { id: roleId } });
+        if (!role) throw new NotFoundException('Role not found');
+
+        // 1. Protect System Roles
+        if (['OWNER', 'ADMIN', 'MEMBER'].includes(role.code)) {
+            throw new BadRequestException('No puedes eliminar roles del sistema (OWNER, ADMIN, MEMBER).');
+        }
+
+        // 2. Check Usage
+        const usageCount = await this.userRoleRepository.count({ where: { roleId } });
+        if (usageCount > 0) {
+            throw new BadRequestException(`No puedes eliminar este rol porque está asignado a ${usageCount} usuarios. Reasigna esos usuarios primero.`);
+        }
+
+        await this.roleRepository.remove(role);
     }
 }

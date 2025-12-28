@@ -60,8 +60,11 @@ export class AuthController {
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermissions('users:delete')
     @Delete('users/:id')
-    suspendUser(@Param('id') id: string, @Req() req) {
-        // In a real app, you might want to check if the requester has permission to suspend THIS user
-        return this.authService.suspendUser(id, req.user.userId);
+    suspendUser(@Param('id') id: string, @Req() req, @Headers('x-company-id') companyId: string) {
+        // Enforces:
+        // 1. Permission check (Guard)
+        // 2. Self-protection (Service)
+        // 3. Hierarchy check (Service)
+        return this.authService.suspendUser(id, req.user.userId, companyId);
     }
 }

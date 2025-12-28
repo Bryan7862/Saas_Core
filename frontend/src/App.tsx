@@ -16,6 +16,7 @@ import { PricingPage } from './modules/subscriptions/pages/PricingPage';
 import { RequireAuth } from './components/RequireAuth';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { OrganizationSettingsPage } from './modules/organizations/pages/OrganizationSettingsPage';
 
 function App() {
     return (
@@ -43,6 +44,7 @@ function App() {
 
                                             {/* Settings Routes */}
                                             <Route path="/settings/general" element={<SettingsPage />} />
+                                            <Route path="/settings/organization" element={<OrganizationSettingsPage />} />
                                             <Route path="/settings/*" element={<ConstructionPage title="Configuración" />} />
 
                                             {/* Legacy/Existing Routes */}

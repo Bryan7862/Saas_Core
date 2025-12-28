@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Req, Delete } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 import { RequirePermissions } from './decorators/require-permissions.decorator';
@@ -23,6 +23,13 @@ export class IamController {
         return this.iamService.getRoles();
     }
 
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions('roles:delete')
+    @Delete('roles/:id')
+    deleteRole(@Param('id') id: string) {
+        return this.iamService.deleteRole(id);
+    }
+
     @Post('permissions')
     createPermission(@Body() createPermissionDto: CreatePermissionDto) {
         return this.iamService.createPermission(createPermissionDto);
@@ -33,9 +40,11 @@ export class IamController {
         return this.iamService.getPermissions();
     }
 
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
+    @RequirePermissions('roles:update')
     @Post('users/assign-role')
-    assignRole(@Body() assignRoleDto: AssignRoleDto) {
-        return this.iamService.assignRole(assignRoleDto);
+    assignRole(@Body() assignRoleDto: AssignRoleDto, @Req() req: any) {
+        return this.iamService.assignRole(assignRoleDto, req.user.userId);
     }
 
     @UseGuards(JwtAuthGuard, PermissionsGuard)

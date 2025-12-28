@@ -54,4 +54,17 @@ export class CulqiService implements OnModuleInit {
     getPublicKey() {
         return this.publicKey;
     }
+
+    // --- Webhook Verification ---
+    async getCharge(chargeId: string) {
+        try {
+            const response = await this.culqi.get(`/charges/${chargeId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Culqi Get Charge Error:', error.response?.data || error.message);
+            // If 404, returns null or throws. 
+            // Better to throw so we know verify failed.
+            throw new Error('Failed to verify charge with Culqi');
+        }
+    }
 }

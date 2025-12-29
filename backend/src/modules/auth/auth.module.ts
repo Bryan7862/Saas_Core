@@ -11,6 +11,7 @@ import { UserRole } from '../iam/entities/user-role.entity';
 import { IamModule } from '../iam/iam.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { TrashModule } from '../trash/trash.module';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
         forwardRef(() => IamModule),
         OrganizationsModule,
         SubscriptionsModule,
+        forwardRef(() => TrashModule),
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],

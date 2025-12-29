@@ -1,13 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Inject, forwardRef } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Assuming it exists here
 
+import { TrashService } from '../trash/trash.service';
+import { TrashAction, TrashEntityType } from '../trash/entities/trash-audit.entity';
+
 @Controller('organizations')
 @UseGuards(JwtAuthGuard)
 export class OrganizationsController {
-    constructor(private readonly organizationsService: OrganizationsService) { }
+    constructor(
+        private readonly organizationsService: OrganizationsService,
+        @Inject(forwardRef(() => TrashService))
+        private readonly trashService: TrashService,
+    ) { }
 
     @Post()
     create(@Request() req, @Body() createOrganizationDto: CreateOrganizationDto) {
@@ -30,7 +37,15 @@ export class OrganizationsController {
     }
 
     @Delete(':id')
-    suspend(@Param('id') id: string, @Request() req) {
-        return this.organizationsService.suspendOrganization(id, req.user.userId);
+    async suspend(@Param('id') id: string, @Request() req) {
+        const result = await this.organizationsService.suspendOrganization(id, req.user.userId);
+        await this.trashService.logAction(
+            TrashEntityType.ORGANIZATION,
+            id,
+            TrashAction.SUSPEND,
+            req.user.userId,
+            'Manual Suspension via API'
+        );
+        return result;
     }
 }

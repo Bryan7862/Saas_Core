@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Headers, Req, UseGuards, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Headers, Req, UseGuards, Delete, Inject, forwardRef } from '@nestjs/common';
 import { RequirePermissions } from '../iam/decorators/require-permissions.decorator';
 import { PermissionsGuard } from '../iam/guards/permissions.guard';
 import { AuthService } from './auth.service';
@@ -7,10 +7,16 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { TrashService } from '../trash/trash.service';
+import { TrashAction, TrashEntityType } from '../trash/entities/trash-audit.entity';
 
 @Controller('admin/auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(
+        private readonly authService: AuthService,
+        @Inject(forwardRef(() => TrashService))
+        private readonly trashService: TrashService,
+    ) { }
 
     @Post('register')
     register(@Body() registerDto: RegisterDto) {
@@ -60,11 +66,19 @@ export class AuthController {
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermissions('users:delete')
     @Delete('users/:id')
-    suspendUser(@Param('id') id: string, @Req() req, @Headers('x-company-id') companyId: string) {
+    async suspendUser(@Param('id') id: string, @Req() req, @Headers('x-company-id') companyId: string) {
         // Enforces:
         // 1. Permission check (Guard)
         // 2. Self-protection (Service)
         // 3. Hierarchy check (Service)
-        return this.authService.suspendUser(id, req.user.userId, companyId);
+        const result = await this.authService.suspendUser(id, req.user.userId, companyId);
+        await this.trashService.logAction(
+            TrashEntityType.USER,
+            id,
+            TrashAction.SUSPEND,
+            req.user.userId,
+            'Manual Suspension via API'
+        );
+        return result;
     }
 }

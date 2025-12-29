@@ -232,6 +232,31 @@ export class AuthService {
         return this.userRepository.save(user);
     }
 
+    async hardDeleteUser(userId: string): Promise<void> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['userRoles', 'userRoles.role']
+        });
+
+        if (!user) throw new NotFoundException('User not found');
+
+        // Safety Check: Is this the last OWNER of any company?
+        // This is complex. Use IamService to check ownerships.
+        // For now, simpler check: If user is OWNER of their default company, check if there are other owners.
+
+        if (user.defaultCompanyId) {
+            const isOwner = user.userRoles.some(ur => ur.role.code === 'OWNER' && ur.companyId === user.defaultCompanyId);
+            if (isOwner) {
+                const ownersCount = await this.iamService.countCompanyOwners(user.defaultCompanyId);
+                if (ownersCount <= 1) {
+                    throw new BadRequestException('Cannot delete the last OWNER of an organization. Transfer ownership or delete the organization first.');
+                }
+            }
+        }
+
+        await this.userRepository.remove(user);
+    }
+
     async getSuspendedUsers(companyId: string): Promise<User[]> {
         return this.userRepository.createQueryBuilder('user')
             .leftJoinAndSelect('user.userRoles', 'userRole')

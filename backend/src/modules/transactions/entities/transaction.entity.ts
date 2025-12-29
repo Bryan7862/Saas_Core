@@ -9,17 +9,23 @@ export class Transaction {
     @Column({ type: 'date' })
     date: string;
 
-    @Column({ type: 'enum', enum: ['ingreso', 'gasto'] })
-    type: 'ingreso' | 'gasto';
+    @Column({ type: 'enum', enum: ['ingreso', 'gasto', 'PAYMENT', 'REFUND', 'ADJUSTMENT'] })
+    type: 'ingreso' | 'gasto' | 'PAYMENT' | 'REFUND' | 'ADJUSTMENT';
 
     @Column({ type: 'decimal', precision: 10, scale: 2 })
     amount: number;
+
+    @Column({ length: 3, default: 'USD' })
+    currency: string;
 
     @Column()
     description: string;
 
     @Column({ nullable: true })
     category: string;
+
+    @Column({ type: 'jsonb', nullable: true })
+    metadata: Record<string, any>;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'user_id' })

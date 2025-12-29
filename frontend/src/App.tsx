@@ -10,13 +10,14 @@ import { TrashPage } from './modules/trash/pages/TrashPage';
 import { ConstructionPage } from './pages/ConstructionPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
-// import { BillingPage } from './pages/BillingPage';
+import { BillingPage } from './pages/BillingPage';
 // import { CreateInvoicePage } from './pages/CreateInvoicePage';
 import { PricingPage } from './modules/subscriptions/pages/PricingPage';
 import { RequireAuth } from './components/RequireAuth';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { OrganizationSettingsPage } from './modules/organizations/pages/OrganizationSettingsPage';
+import { TransactionsPage } from './modules/transactions/pages/TransactionsPage';
 
 function App() {
     return (
@@ -40,17 +41,20 @@ function App() {
                                             <Route path="/clients/*" element={<ConstructionPage title="Gestión de Clientes" />} />
                                             <Route path="/suppliers/*" element={<ConstructionPage title="Proveedores" />} />
                                             <Route path="/reports/*" element={<ConstructionPage title="Reportes y Analíticas" />} />
-                                            <Route path="/billing/*" element={<ConstructionPage title="Facturación Electrónica" />} />
+                                            <Route path="/billing/*" element={<BillingPage />} />
 
                                             {/* Settings Routes */}
                                             <Route path="/settings/general" element={<SettingsPage />} />
                                             <Route path="/settings/organization" element={<OrganizationSettingsPage />} />
+                                            <Route path="/settings/billing" element={<BillingPage />} />
+                                            <Route path="/settings/payments" element={<BillingPage />} />
                                             <Route path="/settings/*" element={<ConstructionPage title="Configuración" />} />
 
                                             {/* Legacy/Existing Routes */}
                                             <Route path="/organizations" element={<OrganizationsPage />} />
                                             <Route path="/users" element={<UsersPage />} />
                                             <Route path="/profile" element={<ProfilePage />} />
+                                            <Route path="/transactions" element={<TransactionsPage />} />
                                             <Route path="/pricing" element={<PricingPage />} />
                                             <Route path="/trash" element={<TrashPage />} />
                                             <Route path="*" element={<Navigate to="/" replace />} />

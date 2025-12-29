@@ -18,6 +18,8 @@ import {
     UserCog
 } from 'lucide-react';
 
+import { Toaster } from 'react-hot-toast';
+
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -151,7 +153,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             subItems: [
                 { label: 'Ventas', path: '/reports/sales' },
                 { label: 'Inventario', path: '/reports/inventory' },
-                { label: 'Finanzas', path: '/reports/financial' },
+                { label: 'Finanzas', path: '/transactions' },
                 { label: 'Clientes Frecuentes', path: '/reports/clients' },
             ]
         },
@@ -180,6 +182,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] flex font-sans text-[var(--text)]">
+            <Toaster />
             {/* Mobile Overlay */}
             {!sidebarOpen && (
                 <div

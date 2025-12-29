@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { notify } from './notify';
 
 // Create a configured axios instance
 export const api = axios.create({
@@ -31,17 +32,41 @@ api.interceptors.request.use(
 );
 
 // Response Interceptor: Global Error Handling (Optional)
+// Response Interceptor: Global Error Handling
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // 1. Auto-handle 401 (Session Expired)
         if (error.response?.status === 401) {
-            // Auto-logout if token expired
             localStorage.removeItem('access_token');
-            // Check if we are already on login page to avoid loops
             if (!window.location.pathname.includes('/login')) {
+                // Optional: You could rely on RequireAuth to redirect, 
+                // but explicit redirect ensures hard reset of state.
                 window.location.href = '/login';
             }
+            return Promise.reject(error);
         }
+
+        // 2. Global Feedback for Common Errors
+        const status = error.response?.status;
+        const serverMessage = error.response?.data?.message;
+
+        if (status === 403) {
+            notify.error('No tienes permisos para realizar esta acción.');
+        } else if (status === 404) {
+            // Only notify if it's not a background check (optional, but good for UX)
+            notify.error('El recurso solicitado no existe.');
+        } else if (status >= 500) {
+            notify.error('Error interno del servidor. Inténtalo más tarde.');
+        } else if (error.code === 'ERR_NETWORK') {
+            notify.error('Error de conexión. Verifica tu internet.');
+        } else if (serverMessage && typeof serverMessage === 'string') {
+            // If backend sends a specific friendly message, show it
+            notify.error(serverMessage);
+        } else {
+            notify.error('Ocurrió un error inesperado.');
+        }
+
         return Promise.reject(error);
     }
 );

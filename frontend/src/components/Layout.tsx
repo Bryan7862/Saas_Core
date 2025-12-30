@@ -5,7 +5,6 @@ import {
     Users,
     Settings,
     LogOut,
-    Bell,
     Search,
     Menu,
     ChevronDown,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { Toaster } from 'react-hot-toast';
+import { NotificationBell } from './ui/NotificationBell';
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
@@ -415,10 +415,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             />
                         </div>
 
-                        <button className="p-2 rounded-lg hover:bg-background text-muted relative">
-                            <Bell size={20} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-surface"></span>
-                        </button>
+                        <NotificationBell />
 
                         <button className="p-2 rounded-lg hover:bg-background text-muted lg:hidden">
                             <Search size={20} />

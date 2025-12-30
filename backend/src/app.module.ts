@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { IamModule } from './modules/iam/iam.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { TrashModule } from './modules/trash/trash.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -33,6 +34,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
         IamModule,
         OrganizationsModule,
         TrashModule,
+        NotificationsModule,
         SubscriptionsModule,
         TransactionsModule,
         PaymentsModule,

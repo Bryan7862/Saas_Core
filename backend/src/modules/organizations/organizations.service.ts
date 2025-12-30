@@ -11,6 +11,8 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 const MAX_ORGANIZATIONS_PER_USER = 3;
 
 import { OrganizationSettings } from './entities/organization-settings.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class OrganizationsService {
@@ -23,6 +25,7 @@ export class OrganizationsService {
         private settingsRepository: Repository<OrganizationSettings>,
         private iamService: IamService,
         private subscriptionsService: SubscriptionsService,
+        private notificationsService: NotificationsService,
     ) { }
 
     async create(userId: string | null, createDto: CreateOrganizationDto): Promise<Company> {
@@ -140,10 +143,22 @@ export class OrganizationsService {
         company.suspendedAt = new Date();
         company.suspendedByUserId = performedByUserId;
 
-        return this.companyRepository.save(company);
+        const savedCompany = await this.companyRepository.save(company);
+
+        // Notify User
+        await this.notificationsService.notifyUser(performedByUserId, {
+            type: NotificationType.WARNING,
+            title: '⚠️ Organización Suspendida',
+            message: `La organización ${company.name} ha sido suspendida correctamente.`,
+            orgId: company.id,
+            userId: performedByUserId,
+            triggeredBy: performedByUserId // Triggered by the actor
+        });
+
+        return savedCompany;
     }
 
-    async restoreOrganization(organizationId: string): Promise<Company> {
+    async restoreOrganization(organizationId: string, performedByUserId: string): Promise<Company> {
         const company = await this.companyRepository.findOne({ where: { id: organizationId } });
         if (!company) throw new NotFoundException('Organization not found');
 
@@ -151,7 +166,19 @@ export class OrganizationsService {
         company.suspendedAt = null;
         company.suspendedByUserId = null;
 
-        return this.companyRepository.save(company);
+        const savedCompany = await this.companyRepository.save(company);
+
+        // Notify User
+        await this.notificationsService.notifyUser(performedByUserId, {
+            type: NotificationType.SUCCESS,
+            title: '✅ Organización Activada',
+            message: `La organización ${company.name} está operativa nuevamente.`,
+            orgId: company.id,
+            userId: performedByUserId,
+            triggeredBy: performedByUserId
+        });
+
+        return savedCompany;
     }
 
     async hardDeleteOrganization(organizationId: string): Promise<void> {

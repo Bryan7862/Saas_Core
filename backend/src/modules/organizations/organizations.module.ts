@@ -12,6 +12,7 @@ import { OrganizationSettings } from './entities/organization-settings.entity';
 
 import { forwardRef } from '@nestjs/common';
 import { TrashModule } from '../trash/trash.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { TrashModule } from '../trash/trash.module';
         IamModule,
         SubscriptionsModule,
         forwardRef(() => TrashModule),
+        NotificationsModule,
     ],
     controllers: [OrganizationsController, OrganizationSettingsController],
     providers: [OrganizationsService],

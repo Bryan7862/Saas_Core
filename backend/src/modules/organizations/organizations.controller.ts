@@ -44,7 +44,8 @@ export class OrganizationsController {
             id,
             TrashAction.SUSPEND,
             req.user.userId,
-            'Manual Suspension via API'
+            'Manual Suspension via API',
+            { notify: false } // Suppress generic trash notification in favor of Organization specific one
         );
         return result;
     }

@@ -26,8 +26,8 @@ export class AuthController {
     @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermissions('users:create')
     @Post('users')
-    createUser(@Body() createUserDto: CreateUserDto) {
-        return this.authService.createUser(createUserDto);
+    createUser(@Body() createUserDto: CreateUserDto, @Req() req) {
+        return this.authService.createUser(createUserDto, req.user.userId);
     }
 
     @Post('login')

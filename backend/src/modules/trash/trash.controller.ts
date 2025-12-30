@@ -49,7 +49,7 @@ export class TrashController {
 
     @Post('organizations/:id/restore')
     async restoreOrganization(@Param('id') id: string, @Req() req) {
-        const result = await this.organizationsService.restoreOrganization(id);
+        const result = await this.organizationsService.restoreOrganization(id, req.user.userId);
         await this.trashService.logAction(
             TrashEntityType.ORGANIZATION,
             id,

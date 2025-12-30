@@ -11,6 +11,8 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import { IamService } from '../iam/iam.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { SubscriptionStatus } from '../subscriptions/enums/subscription-status.enum';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 // const MAX_USERS_PER_ORGANIZATION = 8; // Removed hardcoded limit
 
@@ -23,6 +25,7 @@ export class AuthService {
         @Inject(forwardRef(() => IamService))
         private readonly iamService: IamService,
         private readonly subscriptionsService: SubscriptionsService,
+        private readonly notificationsService: NotificationsService,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -74,7 +77,7 @@ export class AuthService {
         return savedUser;
     }
 
-    async createUser(createUserDto: CreateUserDto): Promise<User> {
+    async createUser(createUserDto: CreateUserDto, performedByUserId: string): Promise<User> {
         const { email, password, defaultCompanyId, firstName, lastName } = createUserDto;
 
         if (defaultCompanyId) {
@@ -133,6 +136,17 @@ export class AuthService {
                 userId: savedUser.id,
                 roleId: memberRole.id,
                 companyId: defaultCompanyId,
+            });
+        }
+
+        // Notify the Admin (User who added the member)
+        if (performedByUserId) {
+            await this.notificationsService.notifyUser(performedByUserId, {
+                type: NotificationType.INFO,
+                title: '👤 Nuevo Miembro',
+                message: 'Un nuevo usuario se ha unido a tu equipo.',
+                userId: performedByUserId,
+                orgId: defaultCompanyId
             });
         }
 

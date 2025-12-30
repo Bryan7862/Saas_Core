@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TrashAudit, TrashEntityType, TrashAction } from './entities/trash-audit.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class TrashService {
     constructor(
         @InjectRepository(TrashAudit)
         private auditRepository: Repository<TrashAudit>,
+        private notificationsService: NotificationsService,
     ) { }
 
     async logAction(
@@ -15,7 +18,8 @@ export class TrashService {
         entityId: string,
         action: TrashAction,
         performedByUserId: string,
-        reason?: string
+        reason?: string,
+        options: { notify?: boolean } = { notify: true } // Default to true
     ) {
         const audit = this.auditRepository.create({
             entityType,
@@ -24,7 +28,19 @@ export class TrashService {
             performedByUserId,
             reason
         });
-        return this.auditRepository.save(audit);
+        const saved = await this.auditRepository.save(audit);
+
+        // Notify User on "Move to Trash" (Suspend) only if enabled
+        if (action === TrashAction.SUSPEND && options.notify) {
+            await this.notificationsService.notifyUser(performedByUserId, {
+                type: NotificationType.INFO,
+                title: '🗑️ Elemento en Papelera',
+                message: 'Un elemento ha sido movido a la papelera de reciclaje.',
+                userId: performedByUserId
+            });
+        }
+
+        return saved;
     }
 
     async getAuditLog() {

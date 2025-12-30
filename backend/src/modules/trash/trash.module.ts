@@ -7,12 +7,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TrashAudit } from './entities/trash-audit.entity';
 import { TrashService } from './trash.service';
 import { UserRole } from '../iam/entities/user-role.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([TrashAudit, UserRole]),
         forwardRef(() => AuthModule),
-        forwardRef(() => OrganizationsModule)
+        forwardRef(() => OrganizationsModule),
+        NotificationsModule
     ],
     controllers: [TrashController],
     providers: [TrashService],

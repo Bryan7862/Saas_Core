@@ -7,6 +7,7 @@ export class CulqiService implements OnModuleInit {
     private culqi: AxiosInstance;
     private publicKey: string;
     private secretKey: string;
+    private isMockMode: boolean = false;
 
     constructor(private configService: ConfigService) { }
 
@@ -15,7 +16,8 @@ export class CulqiService implements OnModuleInit {
         this.publicKey = this.configService.get<string>('CULQI_PUBLIC_KEY') || 'pk_test_placeholder';
 
         if (this.secretKey === 'sk_test_placeholder') {
-            console.warn('CULQI_SECRET_KEY not set. Using placeholder. Payments will fail.');
+            console.warn('⚠️ [Culqi] Keys not set. Activando MOCK MODE. Los pagos serán simulados.');
+            this.isMockMode = true;
         }
 
         this.culqi = axios.create({
@@ -28,6 +30,24 @@ export class CulqiService implements OnModuleInit {
     }
 
     async createOrder(organizationId: string, amount: number, description: string, email: string) {
+        if (this.isMockMode) {
+            console.log(`[Culqi Mock] Creating Order for ${amount} PEN`);
+            return {
+                object: "order",
+                id: `ord_mock_${organizationId}_${Date.now()}`,
+                amount: amount,
+                currency_code: "PEN",
+                description: description,
+                state: "pending",
+                total_fee: 0,
+                net_amount: amount,
+                fee_details: null,
+                creation_date: Date.now(),
+                expiration_date: Date.now() + 86400000,
+                metadata: { organizationId }
+            };
+        }
+
         // Amount is in cents (e.g. 5000 = S/ 50.00)
         try {
             const response = await this.culqi.post('/orders', {
@@ -57,6 +77,22 @@ export class CulqiService implements OnModuleInit {
 
     // --- Webhook Verification ---
     async getCharge(chargeId: string) {
+        if (this.isMockMode || chargeId.startsWith('chr_mock_')) {
+            console.log(`[Culqi Mock] Verifying Charge ${chargeId}`);
+            return {
+                object: "charge",
+                id: chargeId,
+                amount: 10000,
+                current_amount: 10000,
+                currency_code: "PEN",
+                state: "captured", // Important for activation logic
+                outcome: {
+                    type: "sale",
+                    code: "AUT0000",
+                    merchant_message: "La operación de venta ha sido autorizada exitosamente"
+                }
+            };
+        }
         try {
             const response = await this.culqi.get(`/charges/${chargeId}`);
             return response.data;

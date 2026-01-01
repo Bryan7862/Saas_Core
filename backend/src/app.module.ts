@@ -27,6 +27,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
                 database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE'), // Support both naming conventions
                 autoLoadEntities: true,
                 synchronize: configService.get<string>('NODE_ENV') === 'development',
+                ssl: configService.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
             }),
             inject: [ConfigService],
         }),

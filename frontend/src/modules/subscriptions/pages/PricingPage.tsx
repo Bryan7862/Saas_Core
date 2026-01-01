@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getCurrentSubscription, createPaymentOrder, Subscription } from '../api';
+import { Check, Loader2, CreditCard } from 'lucide-react';
+import { getCurrentSubscription, createPaymentOrder, confirmPayment, Subscription } from '../api';
 
 const PLANS = [
     {
@@ -106,6 +107,7 @@ export const PricingPage = () => {
                 setProcessing(null);
             } else {
                 alert('Error: Culqi no cargó correctamente. Refresca la página.');
+                setProcessing(null);
             }
 
         } catch (error) {

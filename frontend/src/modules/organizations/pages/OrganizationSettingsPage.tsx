@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { api } from '../../../lib/api';
 import { Save, Globe, Moon, Bell } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
 
 export const OrganizationSettingsPage = () => {
     // Current org context
-    const { user } = useAuth();
     // Assuming route is /organizations/:id/settings or similar
     // Or just /settings/organization using context
     // The previous prompt suggested /organization/settings. 

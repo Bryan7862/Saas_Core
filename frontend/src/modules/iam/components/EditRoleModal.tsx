@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getPermissions, syncRolePermissions, getRoles } from '../api';
+import { getPermissions, syncRolePermissions } from '../api';
 import { RolePermissionsSelector } from './RolePermissionsSelector';
 
 interface EditRoleModalProps {
@@ -30,7 +30,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
             // Otherwise we might need to fetch the single role.
             // Assuming getRoles() returns relations as per Backend Service (yes it does relations: ['rolePermissions']).
 
-            const currentPerms = role.rolePermissions?.map((rp: any) => rp.permission.code); // wait, selector works with IDs?
             // backend returns rolePermissions -> permission -> id/code.
             // Selector needs IDs to match.
             const currentIds = role.rolePermissions?.map((rp: any) => rp.permission.id) || [];

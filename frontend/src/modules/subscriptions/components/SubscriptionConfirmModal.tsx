@@ -16,8 +16,7 @@ export const SubscriptionConfirmModal: React.FC<SubscriptionConfirmModalProps> =
     onClose,
     onConfirm,
     newPlanName,
-    newPlanPrice,
-    isUpgrade
+    newPlanPrice
 }) => {
     if (!isOpen) return null;
 

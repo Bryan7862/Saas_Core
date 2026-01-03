@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, MapPin, Phone, Globe, Camera } from 'lucide-react';
 import { DEPARTAMENTOS_PERU, getProvinciasByDepartamento, getDistritosByProvincia } from '../data/ubicacionesPeru';
-import { getProfile, updateProfile, UserProfile as ApiUserProfile } from '../modules/auth/api';
-import { api } from '../lib/api';
 // Re-declare local interface to match component state, or adapt.
 interface UserProfile {
     nombre: string;

@@ -100,14 +100,14 @@ export const TrashPage = () => {
                     <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
                         <Trash2 size={24} />
                     </div>
-                    <h1 className="text-2xl font-bold text-[var(--text)]">Recycle Bin</h1>
+                    <h1 className="text-2xl font-bold text-[var(--text)]">Papelera de Reciclaje</h1>
                 </div>
                 <button
                     onClick={loadAuditLogs}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
                 >
                     <History size={18} />
-                    View History
+                    Ver Historial
                 </button>
             </div>
 
@@ -116,13 +116,13 @@ export const TrashPage = () => {
                     onClick={() => setActiveTab('users')}
                     className={`px-4 py-2 text-sm font-medium ${activeTab === 'users' ? 'border-b-2 border-[var(--primary)] text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
                 >
-                    Suspended Users
+                    Usuarios Suspendidos
                 </button>
                 <button
                     onClick={() => setActiveTab('orgs')}
                     className={`px-4 py-2 text-sm font-medium ${activeTab === 'orgs' ? 'border-b-2 border-[var(--primary)] text-[var(--primary)]' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
                 >
-                    Suspended Organizations
+                    Organizaciones Suspendidas
                 </button>
             </div>
 
@@ -136,10 +136,10 @@ export const TrashPage = () => {
                             <table className="min-w-full divide-y divide-[var(--border)]">
                                 <thead className="bg-[var(--bg-primary)]">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Name</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Suspended At</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">NOMBRE</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">ESTADO</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">FECHA DE SUSPENSIÓN</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-[var(--muted)] uppercase tracking-wider">ACCIONES</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-[var(--card-bg)] divide-y divide-[var(--border)]">
@@ -158,21 +158,21 @@ export const TrashPage = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted)]">
                                                     {user.suspendedAt ? new Date(user.suspendedAt).toLocaleString() : '-'}
-                                                    {eligible && <span className="ml-2 px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded">Eligible for deletion</span>}
+                                                    {eligible && <span className="ml-2 px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded">Eliminación habilitada</span>}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-3">
                                                     <button
                                                         onClick={() => handleRestore(user.id, 'user')}
                                                         className="text-[var(--primary)] hover:opacity-80 flex items-center gap-1"
                                                     >
-                                                        <RotateCcw size={16} /> Restore
+                                                        <RotateCcw size={16} /> Restaurar
                                                     </button>
                                                     {eligible && (
                                                         <button
                                                             onClick={() => setShowDeleteConfirm({ id: user.id, type: 'user' })}
                                                             className="text-red-600 hover:text-red-800 flex items-center gap-1"
                                                         >
-                                                            <Trash2 size={16} /> Delete
+                                                            <Trash2 size={16} /> Eliminar
                                                         </button>
                                                     )}
                                                 </td>
@@ -195,21 +195,21 @@ export const TrashPage = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted)]">
                                                     {org.suspendedAt ? new Date(org.suspendedAt).toLocaleString() : '-'}
-                                                    {eligible && <span className="ml-2 px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded">Eligible for deletion</span>}
+                                                    {eligible && <span className="ml-2 px-2 py-0.5 text-xs bg-orange-100 text-orange-800 rounded">Eliminación habilitada</span>}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-3">
                                                     <button
                                                         onClick={() => handleRestore(org.id, 'org')}
                                                         className="text-[var(--primary)] hover:opacity-80 flex items-center gap-1"
                                                     >
-                                                        <RotateCcw size={16} /> Restore
+                                                        <RotateCcw size={16} /> Restaurar
                                                     </button>
                                                     {eligible && (
                                                         <button
                                                             onClick={() => setShowDeleteConfirm({ id: org.id, type: 'org' })}
                                                             className="text-red-600 hover:text-red-800 flex items-center gap-1"
                                                         >
-                                                            <Trash2 size={16} /> Delete
+                                                            <Trash2 size={16} /> Eliminar
                                                         </button>
                                                     )}
                                                 </td>
@@ -220,7 +220,7 @@ export const TrashPage = () => {
                                     {((activeTab === 'users' && users.length === 0) || (activeTab === 'orgs' && orgs.length === 0)) && (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-8 text-center text-[var(--muted)]">
-                                                No suspended items found
+                                                No se encontraron elementos suspendidos
                                             </td>
                                         </tr>
                                     )}
@@ -236,24 +236,24 @@ export const TrashPage = () => {
                 showDeleteConfirm && (
                     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full">
-                            <h2 className="text-xl font-bold text-red-600 mb-4">Permanent Deletion</h2>
+                            <h2 className="text-xl font-bold text-red-600 mb-4">Eliminación Permanente</h2>
                             <p className="mb-4 text-gray-700 dark:text-gray-300">
-                                Are you sure you want to permanently delete this {showDeleteConfirm.type === 'user' ? 'User' : 'Organization'}?
+                                ¿Estás seguro de que deseas eliminar permanentemente {showDeleteConfirm.type === 'user' ? 'este Usuario' : 'esta Organización'}?
                                 <br /><br />
-                                <strong>This action cannot be undone.</strong>
+                                <strong>Esta acción no se puede deshacer.</strong>
                             </p>
                             <div className="flex justify-end gap-3">
                                 <button
                                     onClick={() => setShowDeleteConfirm(null)}
                                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded"
                                 >
-                                    Cancel
+                                    Cancelar
                                 </button>
                                 <button
                                     onClick={handlePermanentDelete}
                                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold"
                                 >
-                                    Delete Permanently
+                                    Eliminar Definitivamente
                                 </button>
                             </div>
                         </div>
@@ -267,7 +267,7 @@ export const TrashPage = () => {
                     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
                             <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Trash Audit Log</h2>
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Historial de Auditoría</h2>
                                 <button onClick={() => setShowAudit(false)} className="text-gray-500 hover:text-gray-700">
                                     <X size={24} />
                                 </button>
@@ -276,12 +276,12 @@ export const TrashPage = () => {
                                 <table className="min-w-full text-left text-sm">
                                     <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                                         <tr>
-                                            <th className="px-4 py-2">Action</th>
-                                            <th className="px-4 py-2">Entity</th>
+                                            <th className="px-4 py-2">Acción</th>
+                                            <th className="px-4 py-2">Entidad</th>
                                             <th className="px-4 py-2">ID</th>
-                                            <th className="px-4 py-2">Performed By</th>
-                                            <th className="px-4 py-2">Date</th>
-                                            <th className="px-4 py-2">Reason</th>
+                                            <th className="px-4 py-2">Realizado Por</th>
+                                            <th className="px-4 py-2">Fecha</th>
+                                            <th className="px-4 py-2">Razón</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y dark:divide-gray-700">
@@ -306,7 +306,7 @@ export const TrashPage = () => {
                                 </table>
                             </div>
                             <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg flex justify-end">
-                                <button onClick={() => setShowAudit(false)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded">Close</button>
+                                <button onClick={() => setShowAudit(false)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded">Cerrar</button>
                             </div>
                         </div>
                     </div>

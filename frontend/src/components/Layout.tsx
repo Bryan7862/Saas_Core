@@ -110,7 +110,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
     const navGroups = [
         {
-            label: 'Dashboard',
+            label: 'Panel de Control',
             path: '/',
             icon: LayoutDashboard
         },

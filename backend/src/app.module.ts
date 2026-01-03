@@ -11,6 +11,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { PlansModule } from './modules/plans/plans.module';
 
 @Module({
     imports: [
@@ -41,6 +42,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         TransactionsModule,
         PaymentsModule,
         DashboardModule,
+        PlansModule,
     ],
 })
 

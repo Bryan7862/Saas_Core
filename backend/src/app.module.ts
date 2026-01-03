@@ -10,6 +10,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -39,8 +40,10 @@ import { PaymentsModule } from './modules/payments/payments.module';
         SubscriptionsModule,
         TransactionsModule,
         PaymentsModule,
+        DashboardModule,
     ],
 })
+
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
         consumer.apply(ContextMiddleware).forRoutes('*');

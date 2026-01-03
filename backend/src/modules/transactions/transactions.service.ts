@@ -11,13 +11,15 @@ export class TransactionsService {
         private transactionRepository: Repository<Transaction>,
     ) { }
 
-    create(userId: string, createTransactionDto: CreateTransactionDto) {
+    create(userId: string, createTransactionDto: CreateTransactionDto, organizationId?: string) {
         const transaction = this.transactionRepository.create({
             ...createTransactionDto,
             user: { id: userId } as any, // Link to user by ID
+            organizationId: organizationId, // Link to organization
         });
         return this.transactionRepository.save(transaction);
     }
+
 
     findAll(userId: string) {
         return this.transactionRepository.find({

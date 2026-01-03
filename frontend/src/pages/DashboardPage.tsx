@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getTransactions, createTransaction, Transaction } from '../modules/dashboard/api';
+import { getTransactions, createTransaction, Transaction, getKpis, updateKpi } from '../modules/dashboard/api';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -115,18 +115,6 @@ export function DashboardPage() {
 
     const [loading, setLoading] = useState(true);
 
-
-
-    // ... processChartData ...
-
-    if (loading) {
-        return (
-            <div className="h-full flex items-center justify-center text-[var(--muted)]">
-                <div className="animate-pulse">Cargando dashboard...</div>
-            </div>
-        );
-    }
-
     const processChartData = (txs: Transaction[]) => {
         const monthsData = new Map<string, { name: string, ingresos: number, gastos: number, monthId: number }>();
         const categoryMap = new Map<string, number>();
@@ -181,11 +169,23 @@ export function DashboardPage() {
 
     const loadData = async () => {
         try {
-            const txs = await getTransactions();
-            // setTransactions(txs); // Removed unused state
+            // Load transactions and KPIs in parallel
+            const [txs, kpisData] = await Promise.all([
+                getTransactions().catch(() => []),
+                getKpis().catch(() => ({ clientes: 0, facturas: 0, inventario: 0 }))
+            ]);
+
             processChartData(txs);
+
+            // Update KPIs from backend (except ingresos which comes from transactions)
+            setKpis(prev => ({
+                ...prev,
+                clientes: kpisData.clientes || 0,
+                facturas: kpisData.facturas || 0,
+                inventario: kpisData.inventario || 0
+            }));
         } catch (error) {
-            console.error("Failed to load transactions", error);
+            console.error("Failed to load data", error);
         } finally {
             setLoading(false);
         }
@@ -194,6 +194,15 @@ export function DashboardPage() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Loading state - show spinner while data is being fetched
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center text-[var(--muted)]">
+                <div className="animate-pulse">Cargando dashboard...</div>
+            </div>
+        );
+    }
 
     const handleAddIngresoGasto = async () => {
         if (formData.date && formData.amount) {
@@ -244,14 +253,28 @@ export function DashboardPage() {
         }
     };
 
-    const handleUpdateKpi = () => {
+    const handleUpdateKpi = async () => {
         if (formData.kpiValue) {
             const value = parseFloat(formData.kpiValue) || 0;
-            setKpis(prev => ({
-                ...prev,
-                [formData.kpiType]: value
-            }));
-            setShowAddDataModal(false);
+
+            try {
+                // Persist to backend
+                await updateKpi({
+                    kpiType: formData.kpiType,
+                    value: value
+                });
+
+                // Update local state
+                setKpis(prev => ({
+                    ...prev,
+                    [formData.kpiType]: value
+                }));
+                setShowAddDataModal(false);
+            } catch (error: any) {
+                console.error("Error updating KPI", error);
+                const msg = error.response?.data?.message || error.message || "Error desconocido";
+                alert(`Error al guardar KPI: ${Array.isArray(msg) ? msg.join(', ') : msg}`);
+            }
         }
     };
 

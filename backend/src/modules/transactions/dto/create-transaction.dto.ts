@@ -5,8 +5,8 @@ export class CreateTransactionDto {
     @IsString()
     date: string;
 
-    @IsEnum(['ingreso', 'gasto'])
-    type: 'ingreso' | 'gasto';
+    @IsEnum(['ingreso', 'gasto', 'REFUND'])
+    type: 'ingreso' | 'gasto' | 'REFUND';
 
     @Type(() => Number)
     @IsNumber()

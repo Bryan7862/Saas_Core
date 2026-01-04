@@ -3,7 +3,7 @@ import { api } from '../../lib/api';
 export interface Transaction {
     id: string;
     date: string;
-    type: 'ingreso' | 'gasto';
+    type: 'ingreso' | 'gasto' | 'REFUND';
     amount: number;
     description: string;
     category?: string;
@@ -12,7 +12,7 @@ export interface Transaction {
 
 export interface CreateTransactionDto {
     date: string;
-    type: 'ingreso' | 'gasto';
+    type: 'ingreso' | 'gasto' | 'REFUND';
     amount: number;
     description: string;
     category?: string;
@@ -34,11 +34,18 @@ export interface UpdateKpiDto {
     year?: number;
 }
 
-export const getTransactions = async (): Promise<Transaction[]> => {
-    const response = await api.get('/transactions');
-    // Backend returns paginated response: { data: Transaction[], total: number }
-    // We need to return just the array for the dashboard
-    return response.data.data || [];
+export interface TransactionFilters {
+    page?: number;
+    limit?: number;
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    type?: string;
+}
+
+export const getTransactions = async (filters: TransactionFilters = {}): Promise<{ data: Transaction[], total: number }> => {
+    const response = await api.get('/transactions', { params: filters });
+    return response.data; // Backend returns { data: [], total: number }
 };
 
 

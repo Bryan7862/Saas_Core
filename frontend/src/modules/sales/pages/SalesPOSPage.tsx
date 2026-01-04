@@ -27,6 +27,7 @@ export const SalesPOSPage = () => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [description, setDescription] = useState('');
+    const [applyTax, setApplyTax] = useState(true);
 
     const addToCart = (product: Product) => {
         setCart(prev => {
@@ -56,9 +57,11 @@ export const SalesPOSPage = () => {
         }));
     };
 
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.18; // IGV 18%
-    const total = subtotal + tax;
+    // Inclusive Tax Logic
+    // The list price is the Total to pay.
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = applyTax ? total / 1.18 : total;
+    const tax = applyTax ? total - subtotal : 0;
 
     const handleCheckout = async () => {
         if (cart.length === 0) return;
@@ -147,8 +150,18 @@ export const SalesPOSPage = () => {
 
                 <div className="p-4 border-t border-[var(--border)] bg-[var(--bg-primary)] rounded-b-xl">
                     <div className="space-y-2 mb-4">
+                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-[var(--border)]">
+                            <span className="text-sm font-medium text-[var(--text)]">Aplicar IGV (18%)</span>
+                            <button
+                                onClick={() => setApplyTax(!applyTax)}
+                                className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${applyTax ? 'bg-[var(--primary)]' : 'bg-gray-400'}`}
+                            >
+                                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${applyTax ? 'translate-x-4' : ''}`} />
+                            </button>
+                        </div>
+
                         <div className="flex justify-between text-sm">
-                            <span className="text-[var(--muted)]">Subtotal</span>
+                            <span className="text-[var(--muted)]">Subtotal {applyTax ? '(Sin IGV)' : ''}</span>
                             <span>S/ {subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">

@@ -153,7 +153,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             subItems: [
                 { label: 'Ventas', path: '/reports/sales' },
                 { label: 'Inventario', path: '/reports/inventory' },
-                { label: 'Finanzas', path: '/transactions' },
+                { label: 'Finanzas', path: '/reports/finance' },
                 { label: 'Clientes Frecuentes', path: '/reports/clients' },
             ]
         },

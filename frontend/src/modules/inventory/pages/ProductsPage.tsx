@@ -1,20 +1,58 @@
 import { useState } from 'react';
 import { Package, Plus, Search, Filter, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useInventory, Product } from '../context/InventoryContext';
 
 export const ProductsPage = () => {
-    // Mock Data
-    const [products, setProducts] = useState([
-        { id: 1, name: 'Laptop Gamer X', category: 'Electrónica', stock: 12, price: 3500.00, status: 'Active' },
-        { id: 2, name: 'Silla Ergonómica', category: 'Mobiliario', stock: 45, price: 450.00, status: 'Active' },
-        { id: 3, name: 'Teclado Mecánico', category: 'Electrónica', stock: 8, price: 120.00, status: 'Low Stock' },
-        { id: 4, name: 'Monitor 24"', category: 'Electrónica', stock: 0, price: 600.00, status: 'Out of Stock' },
-    ]);
+    const { products, addProduct, updateProduct, deleteProduct, categories } = useInventory();
+
+    // Derived unique categories for filter or just use static list from context categories? 
+    // The previous implementation had a static list. The context now has categories.
+    // Let's us the categories from context for the dropdown.
+
+    const [showModal, setShowModal] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        category: '',
+        stock: 0,
+        minStock: 5,
+        price: 0,
+        status: 'Active' as Product['status']
+    });
+
+    const handleEdit = (product: Product) => {
+        setEditingId(product.id);
+        setFormData({
+            name: product.name,
+            category: product.category,
+            stock: product.stock,
+            minStock: product.minStock,
+            price: product.price,
+            status: product.status
+        });
+        setShowModal(true);
+    };
+
+    const handleSave = () => {
+        if (!formData.name || !formData.category) {
+            toast.error('Nombre y categoría son requeridos');
+            return;
+        }
+
+        if (editingId) {
+            updateProduct(editingId, formData);
+        } else {
+            addProduct(formData);
+        }
+        setShowModal(false);
+        setEditingId(null);
+        setFormData({ name: '', category: '', stock: 0, minStock: 5, price: 0, status: 'Active' });
+    };
 
     const handleDelete = (id: number) => {
         if (confirm('¿Estás seguro de eliminar este producto?')) {
-            setProducts(products.filter(p => p.id !== id));
-            toast.success('Producto eliminado');
+            deleteProduct(id);
         }
     };
 
@@ -27,7 +65,11 @@ export const ProductsPage = () => {
                     <p className="text-[var(--muted)]">Gestiona tus productos y servicios</p>
                 </div>
                 <button
-                    onClick={() => toast('Función de agregar próximamente')}
+                    onClick={() => {
+                        setEditingId(null);
+                        setFormData({ name: '', category: '', stock: 0, minStock: 5, price: 0, status: 'Active' });
+                        setShowModal(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors"
                 >
                     <Plus size={20} />
@@ -101,7 +143,10 @@ export const ProductsPage = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="p-2 text-[var(--muted)] hover:text-[var(--primary)] rounded-lg hover:bg-[var(--bg-soft)]">
+                                            <button
+                                                onClick={() => handleEdit(product)}
+                                                className="p-2 text-[var(--muted)] hover:text-[var(--primary)] rounded-lg hover:bg-[var(--bg-soft)]"
+                                            >
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
@@ -118,6 +163,82 @@ export const ProductsPage = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl">
+                        <div className="p-6 border-b border-[var(--border)]">
+                            <h2 className="text-xl font-bold">{editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Nombre</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Categoría</label>
+                                <select
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Stock</label>
+                                    <input
+                                        type="number"
+                                        value={formData.stock}
+                                        onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Min Stock</label>
+                                    <input
+                                        type="number"
+                                        value={formData.minStock}
+                                        onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Precio (S/)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)]"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90"
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

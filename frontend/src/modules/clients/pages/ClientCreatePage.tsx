@@ -1,25 +1,32 @@
 import React, { useState } from 'react';
 import { Save, ArrowLeft, Mail, Phone, MapPin, Building } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useClients } from '../context/ClientsContext';
 
 export const ClientCreatePage = () => {
     const navigate = useNavigate();
+    const { addClient } = useClients();
     const [loading, setLoading] = useState(false);
 
-    // In a real app, this would use a proper API
-    // For now we simulate an API call
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        notes: '',
+        type: 'Personal'
+    });
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simulating network delay
+        // Simulation
         setTimeout(() => {
+            addClient(formData);
             setLoading(false);
-            toast.success('Cliente registrado exitosamente');
-            // We could redirect or clear form
             navigate('/clients');
-        }, 1000);
+        }, 800);
     };
 
     return (
@@ -45,6 +52,8 @@ export const ClientCreatePage = () => {
                                 <input
                                     required
                                     type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
                                     placeholder="Ej: Juan Pérez / Empresa SAC"
                                 />
@@ -58,6 +67,8 @@ export const ClientCreatePage = () => {
                                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                 <input
                                     type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
                                     placeholder="correo@ejemplo.com"
                                 />
@@ -71,6 +82,8 @@ export const ClientCreatePage = () => {
                                 <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                 <input
                                     type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
                                     placeholder="+51 999 999 999"
                                 />
@@ -84,6 +97,8 @@ export const ClientCreatePage = () => {
                                 <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                 <input
                                     type="text"
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                     className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
                                     placeholder="Av. Principal 123, Lima"
                                 />
@@ -95,6 +110,8 @@ export const ClientCreatePage = () => {
                             <label className="block text-sm font-medium text-[var(--muted)] mb-1">Notas Adicionales</label>
                             <textarea
                                 rows={3}
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
                                 placeholder="Detalles extra..."
                             />

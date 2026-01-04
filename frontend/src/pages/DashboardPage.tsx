@@ -174,12 +174,12 @@ export function DashboardPage() {
     const loadData = async () => {
         try {
             // Load transactions and KPIs in parallel
-            const [txs, kpisData] = await Promise.all([
-                getTransactions().catch(() => []),
+            const [txsResponse, kpisData] = await Promise.all([
+                getTransactions().catch(() => ({ data: [], total: 0 })),
                 getKpis().catch(() => ({ clientes: 0, facturas: 0, inventario: 0 }))
             ]);
 
-            processChartData(txs);
+            processChartData(txsResponse.data);
 
             // Update KPIs from backend (except ingresos which comes from transactions)
             setKpis(prev => ({

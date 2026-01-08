@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import * as clientsApi from '../supabaseApi';
 
 export interface Client {
-    id: number;
+    id: string;
     name: string;
     email: string;
     phone: string;
@@ -13,38 +14,86 @@ export interface Client {
 
 interface ClientsContextType {
     clients: Client[];
-    addClient: (client: Omit<Client, 'id'>) => void;
-    updateClient: (id: number, client: Partial<Client>) => void;
-    deleteClient: (id: number) => void;
+    loading: boolean;
+    error: string | null;
+    addClient: (client: Omit<Client, 'id'>) => Promise<void>;
+    updateClient: (id: string, client: Partial<Client>) => Promise<void>;
+    deleteClient: (id: string) => Promise<void>;
+    refreshClients: () => Promise<void>;
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
 
 export const ClientsProvider = ({ children }: { children: ReactNode }) => {
-    const [clients, setClients] = useState<Client[]>([
-        { id: 1, name: 'Empresa ABC S.A.C.', email: 'contacto@abc.pe', phone: '999123456', type: 'Corporativo', address: 'Av. Industrial 123, Lima' },
-        { id: 2, name: 'Juan Pérez', email: 'juan.perez@gmail.com', phone: '987654321', type: 'Personal', address: 'Calle Los Alamos 456, Surco' },
-        { id: 3, name: 'Innovaciones Tech', email: 'ventas@innotech.com', phone: '01 4567890', type: 'Corporativo', address: 'Parque Tecnológico 789, San Isidro' },
-    ]);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const addClient = (data: Omit<Client, 'id'>) => {
-        const newClient = { ...data, id: Math.max(...clients.map(c => c.id), 0) + 1 };
-        setClients([...clients, newClient]);
-        toast.success('Cliente registrado exitosamente');
+    const fetchClients = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await clientsApi.getClients();
+            setClients(data);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Error al cargar clientes';
+            setError(message);
+            console.error('Error fetching clients:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchClients();
+    }, [fetchClients]);
+
+    const addClient = async (data: Omit<Client, 'id'>) => {
+        try {
+            const newClient = await clientsApi.createClient(data);
+            setClients(prev => [...prev, newClient]);
+            toast.success('Cliente registrado exitosamente');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Error al crear cliente';
+            toast.error(message);
+            throw err;
+        }
     };
 
-    const updateClient = (id: number, data: Partial<Client>) => {
-        setClients(clients.map(c => c.id === id ? { ...c, ...data } : c));
-        toast.success('Cliente actualizado exitosamente');
+    const updateClient = async (id: string, data: Partial<Client>) => {
+        try {
+            const updated = await clientsApi.updateClient(id, data);
+            setClients(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c));
+            toast.success('Cliente actualizado exitosamente');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Error al actualizar cliente';
+            toast.error(message);
+            throw err;
+        }
     };
 
-    const deleteClient = (id: number) => {
-        setClients(clients.filter(c => c.id !== id));
-        toast.success('Cliente eliminado');
+    const deleteClient = async (id: string) => {
+        try {
+            await clientsApi.deleteClient(id);
+            setClients(prev => prev.filter(c => c.id !== id));
+            toast.success('Cliente eliminado');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Error al eliminar cliente';
+            toast.error(message);
+            throw err;
+        }
     };
 
     return (
-        <ClientsContext.Provider value={{ clients, addClient, updateClient, deleteClient }}>
+        <ClientsContext.Provider value={{
+            clients,
+            loading,
+            error,
+            addClient,
+            updateClient,
+            deleteClient,
+            refreshClients: fetchClients
+        }}>
             {children}
         </ClientsContext.Provider>
     );

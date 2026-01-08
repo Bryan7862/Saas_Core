@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, FileText } from 'lucide-react';
-import { getTransactions, Transaction } from '../../dashboard/api';
+import { getSalesHistory, Transaction } from '../supabaseApi';
 import toast from 'react-hot-toast';
 
 export const SalesHistoryPage = () => {
@@ -16,7 +16,7 @@ export const SalesHistoryPage = () => {
         setLoading(true);
         try {
             // Filter strictly for sales (ingreso)
-            const response = await getTransactions({
+            const response = await getSalesHistory({
                 type: 'ingreso', // Use lowercase as per entity
                 limit: 50,
                 startDate: filters.startDate || undefined,

@@ -1,33 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, Trash2, Save } from 'lucide-react';
-import { createTransaction } from '../../dashboard/api';
+import { getProducts, createSale, Product } from '../supabaseApi';
 import toast from 'react-hot-toast';
-
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    category: string;
-}
-
-// Mock products for POS - In future fetch from Inventory API
-const MOCK_PRODUCTS: Product[] = [
-    { id: '1', name: 'Consultoría Básica', price: 150.00, category: 'Servicios' },
-    { id: '2', name: 'Suscripción Mensual', price: 50.00, category: 'Suscripciones' },
-    { id: '3', name: 'Implementación Web', price: 1200.00, category: 'Proyectos' },
-    { id: '4', name: 'Soporte Técnico', price: 80.00, category: 'Servicios' },
-    { id: '5', name: 'Licencia Software', price: 200.00, category: 'Software' },
-];
 
 interface CartItem extends Product {
     quantity: number;
 }
 
 export const SalesPOSPage = () => {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [description, setDescription] = useState('');
     const [applyTax, setApplyTax] = useState(true);
+
+    // Load products from Supabase
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                const data = await getProducts();
+                setProducts(data);
+            } catch (error) {
+                console.error(error);
+                toast.error('Error al cargar productos');
+            } finally {
+                setLoadingProducts(false);
+            }
+        };
+        loadProducts();
+    }, []);
 
     const addToCart = (product: Product) => {
         setCart(prev => {
@@ -72,11 +74,11 @@ export const SalesPOSPage = () => {
             // Let's create one summary transaction for simplicity
             const summaryDesc = description || `Venta POS: ${cart.map(i => `${i.quantity}x ${i.name}`).join(', ')}`;
 
-            await createTransaction({
+            await createSale({
                 date: new Date().toISOString().split('T')[0],
                 type: 'ingreso',
                 amount: total,
-                description: summaryDesc.substring(0, 255), // Limit length
+                description: summaryDesc.substring(0, 255),
                 category: 'Venta POS'
             });
 
@@ -101,17 +103,27 @@ export const SalesPOSPage = () => {
                 </h2>
 
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                    {MOCK_PRODUCTS.map(product => (
-                        <button
-                            key={product.id}
-                            onClick={() => addToCart(product)}
-                            className="p-4 rounded-lg border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--bg-primary)] transition-all text-left group"
-                        >
-                            <div className="font-semibold text-[var(--text)]">{product.name}</div>
-                            <div className="text-sm text-[var(--muted)]">{product.category}</div>
-                            <div className="mt-2 text-lg font-bold text-[var(--primary)]">S/ {product.price.toFixed(2)}</div>
-                        </button>
-                    ))}
+                    {loadingProducts ? (
+                        <div className="col-span-full text-center py-8 text-[var(--muted)]">
+                            Cargando productos...
+                        </div>
+                    ) : products.length === 0 ? (
+                        <div className="col-span-full text-center py-8 text-[var(--muted)]">
+                            No hay productos. Agrégalos en Supabase.
+                        </div>
+                    ) : (
+                        products.map(product => (
+                            <button
+                                key={product.id}
+                                onClick={() => addToCart(product)}
+                                className="p-4 rounded-lg border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--bg-primary)] transition-all text-left group"
+                            >
+                                <div className="font-semibold text-[var(--text)]">{product.name}</div>
+                                <div className="text-sm text-[var(--muted)]">{product.category}</div>
+                                <div className="mt-2 text-lg font-bold text-[var(--primary)]">S/ {product.price.toFixed(2)}</div>
+                            </button>
+                        ))
+                    )}
                 </div>
             </div>
 

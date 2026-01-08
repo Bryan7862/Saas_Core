@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Save, ArrowLeft, Mail, Phone, MapPin, Building } from 'lucide-react';
+import { Save, ArrowLeft, Mail, Phone, MapPin, Building, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useClients } from '../context/ClientsContext';
 
 export const ClientCreatePage = () => {
@@ -19,14 +20,22 @@ export const ClientCreatePage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.name.trim()) {
+            toast.error('El nombre es requerido');
+            return;
+        }
+
         setLoading(true);
 
-        // Simulation
-        setTimeout(() => {
-            addClient(formData);
-            setLoading(false);
+        try {
+            await addClient(formData);
             navigate('/clients');
-        }, 800);
+        } catch {
+            // Error handled by context
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -90,6 +99,19 @@ export const ClientCreatePage = () => {
                             </div>
                         </div>
 
+                        {/* Type */}
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-[var(--muted)] mb-1">Tipo de Cliente</label>
+                            <select
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]"
+                            >
+                                <option value="Personal">Personal</option>
+                                <option value="Corporativo">Corporativo</option>
+                            </select>
+                        </div>
+
                         {/* Address */}
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-[var(--muted)] mb-1">Dirección Fiscal</label>
@@ -122,17 +144,27 @@ export const ClientCreatePage = () => {
                         <button
                             type="button"
                             onClick={() => navigate(-1)}
-                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--bg-primary)]"
+                            disabled={loading}
+                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--bg-primary)] disabled:opacity-50"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 flex items-center gap-2"
+                            className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 flex items-center gap-2 disabled:opacity-50"
                         >
-                            <Save size={18} />
-                            {loading ? 'Guardando...' : 'Guardar Cliente'}
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={18} />
+                                    Guardar Cliente
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

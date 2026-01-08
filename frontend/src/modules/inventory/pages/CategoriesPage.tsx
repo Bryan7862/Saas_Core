@@ -1,53 +1,53 @@
 import { useState } from 'react';
-import { Tag, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Tag, Plus, Search, Edit2, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useInventory, Category } from '../context/InventoryContext';
 
 export const CategoriesPage = () => {
-    const [categories, setCategories] = useState([
-        { id: 1, name: 'Electrónica', description: 'Dispositivos y gadgets electrónicos', items: 15 },
-        { id: 2, name: 'Mobiliario', description: 'Muebles de oficina y hogar', items: 8 },
-        { id: 3, name: 'Software', description: 'Licencias y suscripciones digitales', items: 5 },
-        { id: 4, name: 'Servicios', description: 'Consultoría y soporte técnico', items: 12 },
-    ]);
+    const { categories, products, addCategory, updateCategory, deleteCategory, loading } = useInventory();
 
     const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({ name: '', description: '' });
 
-    const handleEdit = (category: any) => {
+    // Count products per category
+    const getCategoryProductCount = (categoryName: string) => {
+        return products.filter(p => p.category === categoryName).length;
+    };
+
+    const handleEdit = (category: Category) => {
         setEditingId(category.id);
         setFormData({ name: category.name, description: category.description });
         setShowModal(true);
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: string) => {
         if (confirm('¿Estás seguro de eliminar esta categoría?')) {
-            setCategories(categories.filter(c => c.id !== id));
-            toast.success('Categoría eliminada');
+            await deleteCategory(id);
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.name) {
             toast.error('El nombre es requerido');
             return;
         }
-
-        if (editingId) {
-            setCategories(categories.map(c => c.id === editingId ? { ...c, ...formData } : c));
-            toast.success('Categoría actualizada');
-        } else {
-            const newCategory = {
-                id: Math.max(...categories.map(c => c.id)) + 1,
-                ...formData,
-                items: 0
-            };
-            setCategories([...categories, newCategory]);
-            toast.success('Categoría creada');
+        setSaving(true);
+        try {
+            if (editingId) {
+                await updateCategory(editingId, formData);
+            } else {
+                await addCategory(formData);
+            }
+            setShowModal(false);
+            setEditingId(null);
+            setFormData({ name: '', description: '' });
+        } catch (error) {
+            // Error handled in context
+        } finally {
+            setSaving(false);
         }
-        setShowModal(false);
-        setEditingId(null);
-        setFormData({ name: '', description: '' });
     };
 
     return (
@@ -81,79 +81,100 @@ export const CategoriesPage = () => {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categories.map((category) => (
-                        <div key={category.id} className="p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--primary)] transition-all group">
-                            <div className="flex justify-between items-start mb-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 rounded-lg bg-[var(--bg-soft)] text-[var(--primary)]">
-                                        <Tag size={20} />
+                {loading ? (
+                    <div className="text-center py-8 text-[var(--muted)]">
+                        <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+                        Cargando categorías...
+                    </div>
+                ) : categories.length === 0 ? (
+                    <div className="text-center py-8 text-[var(--muted)]">
+                        No hay categorías. Agrega una nueva.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.map((category) => (
+                            <div key={category.id} className="p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--primary)] transition-all group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 rounded-lg bg-[var(--bg-soft)] text-[var(--primary)]">
+                                            <Tag size={20} />
+                                        </div>
+                                        <h3 className="font-bold text-[var(--text)]">{category.name}</h3>
                                     </div>
-                                    <h3 className="font-bold text-[var(--text)]">{category.name}</h3>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => handleEdit(category)}
+                                            className="p-1.5 hover:bg-[var(--bg-soft)] rounded text-[var(--muted)] hover:text-[var(--text)]"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(category.id)}
+                                            className="p-1.5 hover:bg-[var(--bg-soft)] rounded text-[var(--muted)] hover:text-red-500"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => handleEdit(category)}
-                                        className="p-1.5 hover:bg-[var(--bg-soft)] rounded text-[var(--muted)] hover:text-[var(--text)]"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(category.id)}
-                                        className="p-1.5 hover:bg-[var(--bg-soft)] rounded text-[var(--muted)] hover:text-red-500"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                <p className="text-sm text-[var(--muted)] mb-3">{category.description}</p>
+                                <div className="text-xs font-medium px-2 py-1 rounded bg-[var(--bg-soft)] w-fit text-[var(--text)]">
+                                    {getCategoryProductCount(category.name)} Productos
                                 </div>
                             </div>
-                            <p className="text-sm text-[var(--muted)] mb-3">{category.description}</p>
-                            <div className="text-xs font-medium px-2 py-1 rounded bg-[var(--bg-soft)] w-fit text-[var(--text)]">
-                                {category.items} Productos
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* Modal */}
+            {/* Modal - Clean Neutral Design */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl">
-                        <div className="p-6 border-b border-[var(--border)]">
-                            <h2 className="text-xl font-bold">{editingId ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
+                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
+                        {/* Header */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
+                            <h2 className="text-lg font-semibold text-[var(--text)]">{editingId ? 'Editar Categoría' : 'Nueva Categoría'}</h2>
+                            <p className="text-sm text-[var(--muted)] mt-0.5">Organiza tus productos</p>
                         </div>
-                        <div className="p-6 space-y-4">
+
+                        {/* Form */}
+                        <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Nombre</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Nombre</label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    placeholder="Ej: Electrónica, Software..."
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Descripción</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Descripción</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    placeholder="Breve descripción..."
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors resize-none"
                                     rows={3}
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3">
+
+                        {/* Footer */}
+                        <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)] flex justify-end gap-3">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)]"
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] font-medium rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90"
+                                disabled={saving}
+                                className="px-5 py-2 bg-[var(--primary)] text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-colors"
                             >
-                                Guardar
+                                {saving && <Loader2 className="animate-spin" size={16} />}
+                                {editingId ? 'Actualizar' : 'Guardar'}
                             </button>
                         </div>
                     </div>

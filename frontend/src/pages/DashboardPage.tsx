@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getTransactions, createTransaction, Transaction, getKpis, updateKpi } from '../modules/dashboard/api';
+import { getTransactions, createTransaction, Transaction, getKpis, updateKpi } from '../modules/dashboard/supabaseApi';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -43,6 +43,7 @@ interface CategoryData {
 
 interface KpiData {
     ingresos: number;
+    gastos: number;
     clientes: number;
     facturas: number;
     inventario: number;
@@ -53,6 +54,7 @@ export function DashboardPage() {
     // Estado para KPIs
     const [kpis, setKpis] = useState<KpiData>({
         ingresos: 0,
+        gastos: 0,
         clientes: 0,
         facturas: 0,
         inventario: 0
@@ -166,9 +168,8 @@ export function DashboardPage() {
 
         setDataArea(areaResult);
         setDataBar(barResult);
-
-        // Update total ingresos KPI from processed data
-        setKpis(prev => ({ ...prev, ingresos: areaResult.reduce((sum, d) => sum + d.ingresos, 0) }));
+        // Note: KPI values (ingresos, gastos) come from the Supabase API in loadData()
+        // The chart data is separate - for visual display only
     };
 
     const loadData = async () => {
@@ -176,18 +177,19 @@ export function DashboardPage() {
             // Load transactions and KPIs in parallel
             const [txsResponse, kpisData] = await Promise.all([
                 getTransactions().catch(() => ({ data: [], total: 0 })),
-                getKpis().catch(() => ({ clientes: 0, facturas: 0, inventario: 0 }))
+                getKpis().catch(() => ({ clientes: 0, facturas: 0, inventario: 0, ingresos: 0, gastos: 0, balance: 0 }))
             ]);
 
             processChartData(txsResponse.data);
 
-            // Update KPIs from backend (except ingresos which comes from transactions)
-            setKpis(prev => ({
-                ...prev,
+            // Update ALL KPIs from Supabase - use the API values for financial data
+            setKpis({
+                ingresos: kpisData.ingresos || 0,
+                gastos: kpisData.gastos || 0,
                 clientes: kpisData.clientes || 0,
                 facturas: kpisData.facturas || 0,
                 inventario: kpisData.inventario || 0
-            }));
+            });
         } catch (error) {
             console.error("Failed to load data", error);
         } finally {
@@ -282,10 +284,8 @@ export function DashboardPage() {
         }
     };
 
-    const totalIngresos = kpis.ingresos > 0 ? kpis.ingresos : dataArea.reduce((sum, d) => sum + d.ingresos, 0);
-    // Mostrar el total de área o el KPI, dependiendo de uso. 
-    // Para consistencia con el modal KPI, usamos el KPI si se setea manualmente, o sumamos si se agregan transacciones.
-    const displayIngresos = totalIngresos;
+    // Calcular ingreso neto (ingresos - gastos)
+    const ingresoNeto = kpis.ingresos - kpis.gastos;
     const totalVentas = dataBar.reduce((sum, d) => sum + d.ventas, 0);
 
     return (
@@ -294,9 +294,9 @@ export function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 flex-none">
                 <KpiCard
                     title="Ingresos del Mes"
-                    value={`S/ ${displayIngresos.toLocaleString()}`}
-                    trend={displayIngresos > 0 ? "+0%" : "0%"}
-                    isPositive={displayIngresos > 0}
+                    value={`S/ ${kpis.ingresos.toLocaleString()}`}
+                    trend={kpis.ingresos > 0 ? "+" : ""}
+                    isPositive={kpis.ingresos > 0}
                     icon={DollarSign}
                     onAdd={() => openModal('ingreso')}
                 />
@@ -334,9 +334,9 @@ export function DashboardPage() {
                         <div>
                             <h3 className="text-[var(--muted)] text-sm font-medium mb-1">Ingresos vs. Gastos</h3>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold text-[var(--text)]">S/ {dataArea.reduce((acc, curr) => acc + curr.ingresos, 0).toLocaleString()}</span>
+                                <span className="text-3xl font-bold text-[var(--text)]">S/ {ingresoNeto.toLocaleString()}</span>
                                 {dataArea.length > 0 && (
-                                    <span className="text-sm font-medium text-green-600">Total acumulado</span>
+                                    <span className="text-sm font-medium text-green-600">Ingreso Neto</span>
                                 )}
                             </div>
                         </div>
@@ -488,198 +488,205 @@ export function DashboardPage() {
 
             {/* Modal para agregar datos */}
             {showAddDataModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-[var(--card-bg)] p-6 rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md mx-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-[var(--text)]">
-                                {modalType === 'ingreso' && 'Agregar Transacción'}
-                                {modalType === 'venta' && 'Agregar Venta por Categoría'}
-                                {modalType === 'kpi' && 'Actualizar KPI'}
-                            </h3>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md overflow-hidden">
+                        {/* Header */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)] flex justify-between items-center">
+                            <div>
+                                <h3 className="text-lg font-semibold text-[var(--text)]">
+                                    {modalType === 'ingreso' && 'Agregar Transacción'}
+                                    {modalType === 'venta' && 'Agregar Venta'}
+                                    {modalType === 'kpi' && 'Actualizar KPI'}
+                                </h3>
+                            </div>
                             <button
                                 onClick={() => setShowAddDataModal(false)}
-                                className="text-[var(--muted)] hover:text-[var(--text)]"
+                                className="text-[var(--muted)] hover:text-[var(--text)] p-1 rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        {modalType === 'ingreso' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Tipo</label>
-                                    <div className="flex gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer">
+                        {/* Content */}
+                        <div className="p-5">
+
+                            {modalType === 'ingreso' && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Tipo</label>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="type"
+                                                    value="ingreso"
+                                                    checked={formData.type === 'ingreso'}
+                                                    onChange={() => setFormData({ ...formData, type: 'ingreso' })}
+                                                    className="accent-[var(--primary)]"
+                                                />
+                                                <span className="text-[var(--text)]">Ingreso</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="type"
+                                                    value="gasto"
+                                                    checked={formData.type === 'gasto'}
+                                                    onChange={() => setFormData({ ...formData, type: 'gasto' })}
+                                                    className="accent-red-500"
+                                                />
+                                                <span className="text-[var(--text)]">Gasto</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Fecha</label>
+                                        <div className="relative">
+                                            <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                             <input
-                                                type="radio"
-                                                name="type"
-                                                value="ingreso"
-                                                checked={formData.type === 'ingreso'}
-                                                onChange={() => setFormData({ ...formData, type: 'ingreso' })}
-                                                className="accent-[var(--primary)]"
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
                                             />
-                                            <span className="text-[var(--text)]">Ingreso</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Concepto / Descripción</label>
+                                        <div className="relative">
+                                            <Type size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                             <input
-                                                type="radio"
-                                                name="type"
-                                                value="gasto"
-                                                checked={formData.type === 'gasto'}
-                                                onChange={() => setFormData({ ...formData, type: 'gasto' })}
-                                                className="accent-red-500"
+                                                type="text"
+                                                placeholder="Ej: Venta de Laptop / Pago de Luz"
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
                                             />
-                                            <span className="text-[var(--text)]">Gasto</span>
-                                        </label>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Fecha</label>
-                                    <div className="relative">
-                                        <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <input
-                                            type="date"
-                                            value={formData.date}
-                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                        />
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto (S/)</label>
+                                        <div className="relative">
+                                            <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={formData.amount}
+                                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Concepto / Descripción</label>
-                                    <div className="relative">
-                                        <Type size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: Venta de Laptop / Pago de Luz"
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                        />
+                                    <button
+                                        onClick={handleAddIngresoGasto}
+                                        className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 mt-2"
+                                    >
+                                        Guardar Transacción
+                                    </button>
+                                </div>
+                            )}
+
+                            {modalType === 'venta' && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Categoría</label>
+                                        <div className="relative">
+                                            <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <select
+                                                value={formData.category} // Use 'category' for category selection
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] appearance-none"
+                                            >
+                                                {categories.map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto (S/)</label>
-                                    <div className="relative">
-                                        <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Fecha de Venta</label>
+                                        <div className="relative">
+                                            <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <input
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Producto / Descripción</label>
+                                        <div className="relative">
+                                            <Type size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <input
+                                                type="text"
+                                                placeholder="Ej: Camiseta Talla M"
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto de Venta (S/)</label>
+                                        <div className="relative">
+                                            <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={formData.amount}
+                                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleAddVenta}
+                                        className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 mt-2"
+                                    >
+                                        Registrar Venta
+                                    </button>
+                                </div>
+                            )}
+
+                            {modalType === 'kpi' && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Métrica</label>
+                                        <div className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--muted)] capitalize">
+                                            {formData.kpiType}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Valor</label>
                                         <input
                                             type="number"
-                                            placeholder="0.00"
-                                            value={formData.amount}
-                                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                            placeholder="0"
+                                            value={formData.kpiValue}
+                                            onChange={(e) => setFormData({ ...formData, kpiValue: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
                                         />
                                     </div>
+                                    <button
+                                        onClick={handleUpdateKpi}
+                                        className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
+                                    >
+                                        Actualizar
+                                    </button>
                                 </div>
-
-                                <button
-                                    onClick={handleAddIngresoGasto}
-                                    className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 mt-2"
-                                >
-                                    Guardar Transacción
-                                </button>
-                            </div>
-                        )}
-
-                        {modalType === 'venta' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Categoría</label>
-                                    <div className="relative">
-                                        <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <select
-                                            value={formData.category} // Use 'category' for category selection
-                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] appearance-none"
-                                        >
-                                            {categories.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Fecha de Venta</label>
-                                    <div className="relative">
-                                        <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <input
-                                            type="date"
-                                            value={formData.date}
-                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Producto / Descripción</label>
-                                    <div className="relative">
-                                        <Type size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <input
-                                            type="text"
-                                            placeholder="Ej: Camiseta Talla M"
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto de Venta (S/)</label>
-                                    <div className="relative">
-                                        <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                                        <input
-                                            type="number"
-                                            placeholder="0.00"
-                                            value={formData.amount}
-                                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                        />
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handleAddVenta}
-                                    className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 mt-2"
-                                >
-                                    Registrar Venta
-                                </button>
-                            </div>
-                        )}
-
-                        {modalType === 'kpi' && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Métrica</label>
-                                    <div className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] text-[var(--muted)] capitalize">
-                                        {formData.kpiType}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Valor</label>
-                                    <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={formData.kpiValue}
-                                        onChange={(e) => setFormData({ ...formData, kpiValue: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleUpdateKpi}
-                                    className="w-full py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
-                                >
-                                    Actualizar
-                                </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

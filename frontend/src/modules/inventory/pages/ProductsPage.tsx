@@ -1,24 +1,20 @@
 import { useState } from 'react';
-import { Package, Plus, Search, Filter, Edit2, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Filter, Edit2, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useInventory, Product } from '../context/InventoryContext';
 
 export const ProductsPage = () => {
-    const { products, addProduct, updateProduct, deleteProduct, categories } = useInventory();
-
-    // Derived unique categories for filter or just use static list from context categories? 
-    // The previous implementation had a static list. The context now has categories.
-    // Let's us the categories from context for the dropdown.
+    const { products, addProduct, updateProduct, deleteProduct, categories, loading } = useInventory();
 
     const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         category: '',
         stock: 0,
-        minStock: 5,
-        price: 0,
-        status: 'Active' as Product['status']
+        min_stock: 5,
+        price: 0
     });
 
     const handleEdit = (product: Product) => {
@@ -27,32 +23,37 @@ export const ProductsPage = () => {
             name: product.name,
             category: product.category,
             stock: product.stock,
-            minStock: product.minStock,
-            price: product.price,
-            status: product.status
+            min_stock: product.min_stock,
+            price: product.price
         });
         setShowModal(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.name || !formData.category) {
             toast.error('Nombre y categoría son requeridos');
             return;
         }
-
-        if (editingId) {
-            updateProduct(editingId, formData);
-        } else {
-            addProduct(formData);
+        setSaving(true);
+        try {
+            if (editingId) {
+                await updateProduct(editingId, formData);
+            } else {
+                await addProduct(formData);
+            }
+            setShowModal(false);
+            setEditingId(null);
+            setFormData({ name: '', category: '', stock: 0, min_stock: 5, price: 0 });
+        } catch (error) {
+            // Error handled in context
+        } finally {
+            setSaving(false);
         }
-        setShowModal(false);
-        setEditingId(null);
-        setFormData({ name: '', category: '', stock: 0, minStock: 5, price: 0, status: 'Active' });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: string) => {
         if (confirm('¿Estás seguro de eliminar este producto?')) {
-            deleteProduct(id);
+            await deleteProduct(id);
         }
     };
 
@@ -67,7 +68,7 @@ export const ProductsPage = () => {
                 <button
                     onClick={() => {
                         setEditingId(null);
-                        setFormData({ name: '', category: '', stock: 0, minStock: 5, price: 0, status: 'Active' });
+                        setFormData({ name: '', category: '', stock: 0, min_stock: 5, price: 0 });
                         setShowModal(true);
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors"
@@ -110,130 +111,160 @@ export const ProductsPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
-                            {products.map((product) => (
-                                <tr key={product.id} className="hover:bg-[var(--bg-primary)] transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-[var(--bg-soft)] flex items-center justify-center text-[var(--muted)]">
-                                                <Package size={20} />
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-[var(--text)]">{product.name}</div>
-                                                <div className="text-xs text-[var(--muted)]">SKU: {1000 + product.id}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
-                                        {product.category}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)] font-medium">
-                                        {product.stock} un.
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
-                                        S/ {product.price.toFixed(2)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${product.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            product.status === 'Low Stock' ? 'bg-amber-500/10 text-amber-500' :
-                                                'bg-rose-500/10 text-rose-500'
-                                            }`}>
-                                            {product.status === 'Active' ? 'Activo' :
-                                                product.status === 'Low Stock' ? 'Bajo Stock' : 'Agotado'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleEdit(product)}
-                                                className="p-2 text-[var(--muted)] hover:text-[var(--primary)] rounded-lg hover:bg-[var(--bg-soft)]"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(product.id)}
-                                                className="p-2 text-[var(--muted)] hover:text-red-500 rounded-lg hover:bg-[var(--bg-soft)]"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--muted)]">
+                                        <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+                                        Cargando productos...
                                     </td>
                                 </tr>
-                            ))}
+                            ) : products.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--muted)]">
+                                        No hay productos. Agrega uno nuevo.
+                                    </td>
+                                </tr>
+                            ) : (
+                                products.map((product) => (
+                                    <tr key={product.id} className="hover:bg-[var(--bg-primary)] transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-[var(--bg-soft)] flex items-center justify-center text-[var(--muted)]">
+                                                    <Package size={20} />
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-[var(--text)]">{product.name}</div>
+                                                    <div className="text-xs text-[var(--muted)]">ID: {product.id.slice(0, 8)}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
+                                            {product.category}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)] font-medium">
+                                            {product.stock} un.
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
+                                            S/ {product.price.toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${product.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                product.status === 'Low Stock' ? 'bg-amber-500/10 text-amber-500' :
+                                                    'bg-rose-500/10 text-rose-500'
+                                                }`}>
+                                                {product.status === 'Active' ? 'Activo' :
+                                                    product.status === 'Low Stock' ? 'Bajo Stock' : 'Agotado'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(product)}
+                                                    className="p-2 text-[var(--muted)] hover:text-[var(--primary)] rounded-lg hover:bg-[var(--bg-soft)]"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(product.id)}
+                                                    className="p-2 text-[var(--muted)] hover:text-red-500 rounded-lg hover:bg-[var(--bg-soft)]"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal - Clean Neutral Design */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl">
-                        <div className="p-6 border-b border-[var(--border)]">
-                            <h2 className="text-xl font-bold">{editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
+                        {/* Header - Subtle accent */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
+                            <h2 className="text-lg font-semibold text-[var(--text)]">{editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                            <p className="text-sm text-[var(--muted)] mt-0.5">Complete los datos del producto</p>
                         </div>
-                        <div className="p-6 space-y-4">
+
+                        {/* Form */}
+                        <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Nombre</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Nombre del Producto</label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                    placeholder="Ej: Laptop Gamer X"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Categoría</label>
-                                <select
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Categoría</label>
+                                <input
+                                    type="text"
+                                    list="category-options"
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
+                                    placeholder={categories.length > 0 ? "Seleccionar o escribir..." : "Escribir categoría..."}
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
+                                />
+                                <datalist id="category-options">
+                                    {categories.map(c => <option key={c.id} value={c.name} />)}
+                                </datalist>
+                                {categories.length === 0 && (
+                                    <p className="text-xs text-[var(--muted)] mt-1">Escribe el nombre de la categoría</p>
+                                )}
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Stock</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Stock</label>
                                     <input
                                         type="number"
                                         value={formData.stock}
                                         onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] text-center focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Min Stock</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Mínimo</label>
                                     <input
                                         type="number"
-                                        value={formData.minStock}
-                                        onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                        value={formData.min_stock}
+                                        onChange={(e) => setFormData({ ...formData, min_stock: Number(e.target.value) })}
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] text-center focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Precio (S/)</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Precio S/</label>
                                     <input
                                         type="number"
                                         value={formData.price}
                                         onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] text-center focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3">
+
+                        {/* Footer */}
+                        <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)] flex justify-end gap-3">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)]"
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] font-medium rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:opacity-90"
+                                disabled={saving}
+                                className="px-5 py-2 bg-[var(--primary)] text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-colors"
                             >
-                                Guardar
+                                {saving && <Loader2 className="animate-spin" size={16} />}
+                                {editingId ? 'Actualizar' : 'Guardar'}
                             </button>
                         </div>
                     </div>

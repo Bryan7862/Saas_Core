@@ -1,18 +1,19 @@
 import { useState } from 'react';
-import { ClipboardList, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { ArrowUp, ArrowDown, Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useInventory } from '../context/InventoryContext';
 
 export const StockAdjustmentsPage = () => {
-    const { adjustments, addAdjustment, products } = useInventory();
+    const { adjustments, addAdjustment, products, loading } = useInventory();
 
     const [showModal, setShowModal] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [modalType, setModalType] = useState<'increase' | 'decrease'>('increase');
     const [formData, setFormData] = useState({
         product: '',
         quantity: 0,
         reason: '',
-        user: 'Admin'
+        user_name: 'Admin'
     });
 
     const handleOpenModal = (type: 'increase' | 'decrease') => {
@@ -20,19 +21,24 @@ export const StockAdjustmentsPage = () => {
         setShowModal(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.product || formData.quantity <= 0 || !formData.reason) {
             toast.error('Complete todos los campos');
             return;
         }
-
-        addAdjustment({
-            ...formData,
-            type: modalType
-        });
-
-        setShowModal(false);
-        setFormData({ product: '', quantity: 0, reason: '', user: 'Admin' });
+        setSaving(true);
+        try {
+            await addAdjustment({
+                ...formData,
+                type: modalType
+            });
+            setShowModal(false);
+            setFormData({ product: '', quantity: 0, reason: '', user_name: 'Admin' });
+        } catch (error) {
+            // Error handled in context
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -86,85 +92,125 @@ export const StockAdjustmentsPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
-                            {adjustments.map((adj) => (
-                                <tr key={adj.id} className="hover:bg-[var(--bg-primary)] transition-colors">
-                                    <td className="px-6 py-4 text-sm text-[var(--text)] whitespace-nowrap">{adj.date}</td>
-                                    <td className="px-6 py-4 text-sm font-medium text-[var(--text)]">{adj.product}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full w-fit ${adj.type === 'increase'
-                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                            }`}>
-                                            {adj.type === 'increase' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                                            {adj.type === 'increase' ? 'Entrada' : 'Salida'}
-                                        </span>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--muted)]">
+                                        <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+                                        Cargando ajustes...
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-[var(--text)] font-mono">{adj.quantity}</td>
-                                    <td className="px-6 py-4 text-sm text-[var(--muted)]">{adj.reason}</td>
-                                    <td className="px-6 py-4 text-sm text-[var(--muted)]">{adj.user}</td>
                                 </tr>
-                            ))}
+                            ) : adjustments.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-[var(--muted)]">
+                                        No hay ajustes registrados.
+                                    </td>
+                                </tr>
+                            ) : (
+                                adjustments.map((adj) => (
+                                    <tr key={adj.id} className="hover:bg-[var(--bg-primary)] transition-colors">
+                                        <td className="px-6 py-4 text-sm text-[var(--text)] whitespace-nowrap">{adj.date}</td>
+                                        <td className="px-6 py-4 text-sm font-medium text-[var(--text)]">{adj.product_name}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full w-fit ${adj.type === 'increase'
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                                }`}>
+                                                {adj.type === 'increase' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                                                {adj.type === 'increase' ? 'Entrada' : 'Salida'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-[var(--text)] font-mono">{adj.quantity}</td>
+                                        <td className="px-6 py-4 text-sm text-[var(--muted)]">{adj.reason}</td>
+                                        <td className="px-6 py-4 text-sm text-[var(--muted)]">{adj.user_name}</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal - Clean Neutral Design */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl">
-                        <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
-                            <h2 className="text-xl font-bold">
-                                {modalType === 'increase' ? 'Nueva Entrada' : 'Nueva Salida'}
-                            </h2>
+                    <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
+                        {/* Header with subtle type indicator */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${modalType === 'increase'
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                    : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                    {modalType === 'increase' ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-[var(--text)]">
+                                        {modalType === 'increase' ? 'Nueva Entrada' : 'Nueva Salida'}
+                                    </h2>
+                                    <p className="text-sm text-[var(--muted)]">
+                                        {modalType === 'increase' ? 'Agregar stock' : 'Restar stock'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-6 space-y-4">
+
+                        {/* Form */}
+                        <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Producto</label>
-                                <select
-                                    value={formData.product}
-                                    onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)]"
-                                >
-                                    <option value="">Seleccionar producto...</option>
-                                    {products.map(p => (
-                                        <option key={p.id} value={p.name}>{p.name} (Stock: {p.stock})</option>
-                                    ))}
-                                </select>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Producto</label>
+                                {products.length === 0 ? (
+                                    <div className="px-3 py-2.5 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm">
+                                        No hay productos. Crea uno primero.
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={formData.product}
+                                        onChange={(e) => setFormData({ ...formData, product: e.target.value })}
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
+                                    >
+                                        <option value="">Seleccionar producto...</option>
+                                        {products.map(p => (
+                                            <option key={p.id} value={p.name}>{p.name} (Stock: {p.stock})</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Cantidad</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Cantidad</label>
                                 <input
                                     type="number"
                                     value={formData.quantity}
                                     onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)]"
+                                    placeholder="0"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Motivo</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Motivo</label>
                                 <textarea
                                     value={formData.reason}
                                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)]"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors resize-none"
                                     rows={3}
-                                    placeholder="Ej: Ajuste de inventario, devolución, etc."
+                                    placeholder="Ej: Ajuste de inventario..."
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3">
+
+                        {/* Footer */}
+                        <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)] flex justify-end gap-3">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)]"
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] font-medium rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className={`px-4 py-2 text-white rounded-lg hover:opacity-90 ${modalType === 'increase' ? 'bg-emerald-600' : 'bg-rose-600'
-                                    }`}
+                                disabled={saving || products.length === 0}
+                                className={`px-5 py-2 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-colors ${modalType === 'increase' ? 'bg-emerald-600' : 'bg-rose-600'}`}
                             >
-                                Guardar Ajuste
+                                {saving && <Loader2 className="animate-spin" size={16} />}
+                                Guardar
                             </button>
                         </div>
                     </div>

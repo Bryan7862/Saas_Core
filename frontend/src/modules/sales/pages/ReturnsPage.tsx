@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, FileText, AlertCircle, X, Calendar, DollarSign, Type } from 'lucide-react';
-import { getTransactions, createTransaction, Transaction } from '../../dashboard/api';
+import { getReturns, createReturn, Transaction } from '../supabaseApi';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -27,7 +27,7 @@ export const ReturnsPage = () => {
         setLoading(true);
         try {
             // Filter strictly for returns (REFUND)
-            const response = await getTransactions({
+            const response = await getReturns({
                 type: 'REFUND',
                 limit: 50,
                 startDate: filters.startDate || undefined,
@@ -53,7 +53,7 @@ export const ReturnsPage = () => {
         }
 
         try {
-            await createTransaction({
+            await createReturn({
                 date: formData.date,
                 type: 'REFUND',
                 amount: parseFloat(formData.amount),
@@ -212,23 +212,28 @@ export const ReturnsPage = () => {
                 </div>
             </div>
 
-            {/* Create Modal */}
+            {/* Create Modal - Clean Neutral Design */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-[var(--card-bg)] p-6 rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md mx-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-[var(--text)]">Registrar Nueva Devolución</h3>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md overflow-hidden">
+                        {/* Header */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)] flex justify-between items-center">
+                            <div>
+                                <h3 className="text-lg font-semibold text-[var(--text)]">Nueva Devolución</h3>
+                                <p className="text-sm text-[var(--muted)] mt-0.5">Registrar reembolso</p>
+                            </div>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="text-[var(--muted)] hover:text-[var(--text)]"
+                                className="text-[var(--muted)] hover:text-[var(--text)] p-1 rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        {/* Form */}
+                        <div className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Fecha</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Fecha</label>
                                 <div className="relative">
                                     <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
@@ -236,13 +241,13 @@ export const ReturnsPage = () => {
                                         value={formData.date}
                                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                         style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Motivo / Descripción</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Motivo / Descripción</label>
                                 <div className="relative">
                                     <Type size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
@@ -250,13 +255,13 @@ export const ReturnsPage = () => {
                                         placeholder="Ej: Producto defectuoso"
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)]"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] placeholder:text-[var(--muted)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto a Reembolsar (S/)</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Monto a Reembolsar (S/)</label>
                                 <div className="relative">
                                     <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
@@ -264,16 +269,25 @@ export const ReturnsPage = () => {
                                         placeholder="0.00"
                                         value={formData.amount}
                                         onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] font-bold text-red-500"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] font-semibold focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
+                        </div>
 
+                        {/* Footer */}
+                        <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)] flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] font-medium rounded-lg hover:bg-[var(--surface)] transition-colors"
+                            >
+                                Cancelar
+                            </button>
                             <button
                                 onClick={handleCreateReturn}
-                                className="w-full py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 mt-4"
+                                className="px-5 py-2 bg-rose-600 text-white font-medium rounded-lg hover:opacity-90 transition-colors"
                             >
-                                Confirmar Devolución
+                                Confirmar
                             </button>
                         </div>
                     </div>

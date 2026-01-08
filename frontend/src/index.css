@@ -6,6 +6,8 @@
   /* Light Mode (Default) */
   --bg-primary: #F3F4F6;
   --bg-soft: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-alt: #F9FAFB; /* Header/Footer: ~4% más oscuro que surface */
   --primary: #000000;
   --text: #1F2937;
   --muted: #6B7280;
@@ -18,6 +20,8 @@
   /* Paleta Slate Premium - Equilibrada */
   --bg-primary: #0F172A;  /* Fondo principal: Slate-900 (azul oscuro profundo, no negro puro) */
   --bg-soft: #060912;     /* Sidebar: Notablemente más oscuro que el contenido */
+  --surface: #1E293B;     /* Superficie de modales y tarjetas: Slate-800 (opaco) */
+  --surface-alt: #1A2332; /* Header/Footer de modales: ~4% más oscuro que surface */
   --primary: #3B82F6;     /* Azul vibrante para botones y acentos */
   --text: #F1F5F9;        /* Texto principal: Slate-100 (blanco suave) */
   --muted: #94A3B8;       /* Texto secundario: Slate-400 */

@@ -161,74 +161,78 @@ export const SuppliersListPage = () => {
                 </div>
             </div>
 
-            {/* Edit Modal */}
+            {/* Edit Modal - Clean Neutral Design */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
-                        <div className="p-6 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-                            <h2 className="text-xl font-bold">Editar Proveedor</h2>
+                        {/* Header */}
+                        <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
+                            <h2 className="text-lg font-semibold text-[var(--text)]">Editar Proveedor</h2>
+                            <p className="text-sm text-[var(--muted)] mt-0.5">Actualiza la información</p>
                         </div>
-                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+
+                        {/* Form */}
+                        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Razón Social</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Razón Social</label>
                                 <div className="relative">
                                     <Building size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Nombre de Contacto</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Nombre de Contacto</label>
                                 <div className="relative">
                                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
                                         type="text"
                                         value={formData.contactName}
                                         onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Email</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Email</label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Teléfono</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Teléfono</label>
                                     <input
                                         type="text"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Categoría</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Categoría</label>
                                     <input
                                         type="text"
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Estado</label>
+                                    <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Estado</label>
                                     <select
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Activo' | 'Inactivo' })}
-                                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)] appearance-none"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors appearance-none"
                                     >
                                         <option value="Activo">Activo</option>
                                         <option value="Inactivo">Inactivo</option>
@@ -236,30 +240,32 @@ export const SuppliersListPage = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Dirección</label>
+                                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">Dirección</label>
                                 <div className="relative">
                                     <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                                     <input
                                         type="text"
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-primary)]/50 flex justify-end gap-3">
+
+                        {/* Footer */}
+                        <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)] flex justify-end gap-3">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                                className="px-4 py-2 text-[var(--muted)] hover:text-[var(--text)] font-medium rounded-lg hover:bg-[var(--surface)] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-all shadow-md active:scale-95"
+                                className="px-5 py-2 bg-[var(--primary)] text-white font-medium rounded-lg hover:opacity-90 transition-colors"
                             >
-                                Guardar Cambios
+                                Guardar
                             </button>
                         </div>
                     </div>

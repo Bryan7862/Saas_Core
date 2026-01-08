@@ -54,6 +54,10 @@ export const createTransaction = async (data: CreateTransactionDto): Promise<Tra
     return response.data;
 };
 
+export const deleteTransaction = async (id: string): Promise<void> => {
+    await api.delete(`/transactions/${id}`);
+};
+
 // KPI API functions
 export const getKpis = async (): Promise<KpiData> => {
     const response = await api.get('/dashboard/kpis');

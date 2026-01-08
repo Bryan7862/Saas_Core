@@ -1,154 +1,192 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
+import * as api from '../supabaseApi';
 
-// Interfaces
-export interface Product {
-    id: number;
-    name: string;
-    category: string;
-    stock: number;
-    minStock: number;
-    price: number;
-    status: 'Active' | 'Low Stock' | 'Out of Stock';
-}
-
-export interface Category {
-    id: number;
-    name: string;
-    description: string;
-    items: number;
-}
-
-export interface Adjustment {
-    id: number;
-    date: string;
-    product: string;
-    type: 'increase' | 'decrease';
-    quantity: number;
-    reason: string;
-    user: string;
-}
+// Re-export types from API
+export type Product = api.Product;
+export type Category = api.Category;
+export type Adjustment = api.Adjustment;
 
 interface InventoryContextType {
     products: Product[];
     categories: Category[];
     adjustments: Adjustment[];
-    addProduct: (product: Omit<Product, 'id'>) => void;
-    updateProduct: (id: number, data: Partial<Product>) => void;
-    deleteProduct: (id: number) => void;
-    addCategory: (category: Omit<Category, 'id' | 'items'>) => void;
-    updateCategory: (id: number, data: Partial<Category>) => void;
-    deleteCategory: (id: number) => void;
-    addAdjustment: (adjustment: Omit<Adjustment, 'id' | 'date'>) => void;
-    restockProduct: (id: number, quantity: number) => void;
+    loading: boolean;
+    addProduct: (product: api.CreateProductDto) => Promise<void>;
+    updateProduct: (id: string, data: Partial<api.CreateProductDto>) => Promise<void>;
+    deleteProduct: (id: string) => Promise<void>;
+    addCategory: (category: api.CreateCategoryDto) => Promise<void>;
+    updateCategory: (id: string, data: Partial<api.CreateCategoryDto>) => Promise<void>;
+    deleteCategory: (id: string) => Promise<void>;
+    addAdjustment: (adjustment: { product: string; quantity: number; reason: string; user_name: string; type: 'increase' | 'decrease' }) => Promise<void>;
+    restockProduct: (id: string, quantity: number) => Promise<void>;
+    refreshData: () => Promise<void>;
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
 export const InventoryProvider = ({ children }: { children: ReactNode }) => {
-    // Initial Mock Data
-    const [products, setProducts] = useState<Product[]>([
-        { id: 1, name: 'Laptop Gamer X', category: 'Electrónica', stock: 12, minStock: 5, price: 3500.00, status: 'Active' },
-        { id: 2, name: 'Silla Ergonómica', category: 'Mobiliario', stock: 45, minStock: 10, price: 450.00, status: 'Active' },
-        { id: 3, name: 'Teclado Mecánico', category: 'Electrónica', stock: 8, minStock: 10, price: 120.00, status: 'Low Stock' },
-        { id: 4, name: 'Monitor 24"', category: 'Electrónica', stock: 0, minStock: 5, price: 600.00, status: 'Out of Stock' },
-    ]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [categories, setCategories] = useState<Category[]>([
-        { id: 1, name: 'Electrónica', description: 'Dispositivos y gadgets electrónicos', items: 15 },
-        { id: 2, name: 'Mobiliario', description: 'Muebles de oficina y hogar', items: 8 },
-        { id: 3, name: 'Software', description: 'Licencias y suscripciones digitales', items: 5 },
-        { id: 4, name: 'Servicios', description: 'Consultoría y soporte técnico', items: 12 },
-    ]);
-
-    const [adjustments, setAdjustments] = useState<Adjustment[]>([
-        { id: 1, date: '2024-01-04', product: 'Laptop Gamer X', type: 'decrease', quantity: 1, reason: 'Dañado', user: 'Admin' },
-        { id: 2, date: '2024-01-03', product: 'Silla Ergonómica', type: 'increase', quantity: 5, reason: 'Devolución Cliente', user: 'Admin' },
-        { id: 3, date: '2024-01-02', product: 'Teclado Mecánico', type: 'decrease', quantity: 2, reason: 'Uso Interno', user: 'Juan Perez' },
-        { id: 4, date: '2024-01-08', product: 'Monitor 24"', type: 'decrease', quantity: 10, reason: 'Robo', user: 'Admin' },
-    ]);
-
-    // Helpers to recalculate status
-    const calculateStatus = (stock: number, minStock: number): Product['status'] => {
-        if (stock === 0) return 'Out of Stock';
-        if (stock <= minStock) return 'Low Stock';
-        return 'Active';
-    };
-
-    // Actions
-    const addProduct = (data: Omit<Product, 'id'>) => {
-        const newProduct = { ...data, id: Math.max(...products.map(p => p.id), 0) + 1 };
-        setProducts([...products, newProduct]);
-        toast.success('Producto creado');
-    };
-
-    const updateProduct = (id: number, data: Partial<Product>) => {
-        setProducts(products.map(p => p.id === id ? { ...p, ...data, status: calculateStatus(data.stock ?? p.stock, data.minStock ?? p.minStock) } : p));
-        toast.success('Producto actualizado');
-    };
-
-    const deleteProduct = (id: number) => {
-        setProducts(products.filter(p => p.id !== id));
-        toast.success('Producto eliminado');
-    };
-
-    const addCategory = (data: Omit<Category, 'id' | 'items'>) => {
-        const newCategory = { ...data, id: Math.max(...categories.map(c => c.id), 0) + 1, items: 0 };
-        setCategories([...categories, newCategory]);
-        toast.success('Categoría creada');
-    };
-
-    const updateCategory = (id: number, data: Partial<Category>) => {
-        setCategories(categories.map(c => c.id === id ? { ...c, ...data } : c));
-        toast.success('Categoría actualizada');
-    };
-
-    const deleteCategory = (id: number) => {
-        setCategories(categories.filter(c => c.id !== id));
-        toast.success('Categoría eliminada');
-    };
-
-    const addAdjustment = (data: Omit<Adjustment, 'id' | 'date'>) => {
-        const newAdj = { ...data, id: Math.max(...adjustments.map(a => a.id), 0) + 1, date: new Date().toISOString().split('T')[0] };
-        setAdjustments([newAdj, ...adjustments]);
-
-        // Also update product stock
-        const product = products.find(p => p.name === data.product);
-        if (product) {
-            const newStock = data.type === 'increase' ? product.stock + data.quantity : Math.max(0, product.stock - data.quantity);
-            updateProduct(product.id, { stock: newStock });
-            // Toast handled in updateProduct but we might want a specific message here
+    // Load data from Supabase on mount
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [productsData, categoriesData, adjustmentsData] = await Promise.all([
+                api.getProducts().catch(() => []),
+                api.getCategories().catch(() => []),
+                api.getAdjustments().catch(() => [])
+            ]);
+            setProducts(productsData);
+            setCategories(categoriesData);
+            setAdjustments(adjustmentsData);
+        } catch (error) {
+            console.error('Error loading inventory data:', error);
+            toast.error('Error al cargar datos de inventario');
+        } finally {
+            setLoading(false);
         }
-
-        toast.success('Ajuste registrado');
     };
 
-    const restockProduct = (id: number, quantity: number) => {
-        const product = products.find(p => p.id === id);
-        if (product) {
-            const newStock = product.stock + quantity;
-            updateProduct(id, { stock: newStock });
+    useEffect(() => {
+        loadData();
+    }, []);
 
-            // Auto-log adjustment
-            const newAdj: Adjustment = {
-                id: Math.max(...adjustments.map(a => a.id), 0) + 1,
-                date: new Date().toISOString().split('T')[0],
-                product: product.name,
-                type: 'increase',
-                quantity: quantity,
-                reason: 'Reabastecimiento Automático',
-                user: 'System'
-            };
-            setAdjustments([newAdj, ...adjustments]);
+    const refreshData = async () => {
+        await loadData();
+    };
+
+    // Products CRUD
+    const addProduct = async (data: api.CreateProductDto) => {
+        try {
+            const newProduct = await api.createProduct(data);
+            setProducts(prev => [...prev, newProduct]);
+            toast.success('Producto creado');
+        } catch (error) {
+            toast.error('Error al crear producto');
+            throw error;
+        }
+    };
+
+    const updateProduct = async (id: string, data: Partial<api.CreateProductDto>) => {
+        try {
+            const updated = await api.updateProduct(id, data);
+            setProducts(prev => prev.map(p => p.id === id ? updated : p));
+            toast.success('Producto actualizado');
+        } catch (error) {
+            toast.error('Error al actualizar producto');
+            throw error;
+        }
+    };
+
+    const deleteProduct = async (id: string) => {
+        try {
+            await api.deleteProduct(id);
+            setProducts(prev => prev.filter(p => p.id !== id));
+            toast.success('Producto eliminado');
+        } catch (error) {
+            toast.error('Error al eliminar producto');
+            throw error;
+        }
+    };
+
+    // Categories CRUD
+    const addCategory = async (data: api.CreateCategoryDto) => {
+        try {
+            const newCategory = await api.createCategory(data);
+            setCategories(prev => [...prev, newCategory]);
+            toast.success('Categoría creada');
+        } catch (error) {
+            toast.error('Error al crear categoría');
+            throw error;
+        }
+    };
+
+    const updateCategory = async (id: string, data: Partial<api.CreateCategoryDto>) => {
+        try {
+            const updated = await api.updateCategory(id, data);
+            setCategories(prev => prev.map(c => c.id === id ? updated : c));
+            toast.success('Categoría actualizada');
+        } catch (error) {
+            toast.error('Error al actualizar categoría');
+            throw error;
+        }
+    };
+
+    const deleteCategory = async (id: string) => {
+        try {
+            await api.deleteCategory(id);
+            setCategories(prev => prev.filter(c => c.id !== id));
+            toast.success('Categoría eliminada');
+        } catch (error) {
+            toast.error('Error al eliminar categoría');
+            throw error;
+        }
+    };
+
+    // Adjustments
+    const addAdjustment = async (data: { product: string; quantity: number; reason: string; user_name: string; type: 'increase' | 'decrease' }) => {
+        try {
+            // Find product by name
+            const product = products.find(p => p.name === data.product);
+            if (!product) {
+                toast.error('Producto no encontrado');
+                return;
+            }
+
+            // Use adjustStock which updates product and creates adjustment
+            await api.adjustStock(
+                product.id,
+                product.name,
+                data.type,
+                data.quantity,
+                data.reason,
+                data.user_name
+            );
+
+            // Refresh data to get updated state
+            await loadData();
+            toast.success('Ajuste registrado');
+        } catch (error) {
+            toast.error('Error al registrar ajuste');
+            throw error;
+        }
+    };
+
+    const restockProduct = async (id: string, quantity: number) => {
+        try {
+            const product = products.find(p => p.id === id);
+            if (!product) {
+                toast.error('Producto no encontrado');
+                return;
+            }
+
+            await api.adjustStock(
+                id,
+                product.name,
+                'increase',
+                quantity,
+                'Reabastecimiento',
+                'System'
+            );
+
+            await loadData();
+            toast.success('Producto reabastecido');
+        } catch (error) {
+            toast.error('Error al reabastecer producto');
+            throw error;
         }
     };
 
     return (
         <InventoryContext.Provider value={{
-            products, categories, adjustments,
+            products, categories, adjustments, loading,
             addProduct, updateProduct, deleteProduct,
             addCategory, updateCategory, deleteCategory,
-            addAdjustment, restockProduct
+            addAdjustment, restockProduct, refreshData
         }}>
             {children}
         </InventoryContext.Provider>

@@ -11,7 +11,7 @@ import {
     ArrowDownRight,
     Edit2
 } from 'lucide-react';
-import { getKpis, getTransactions, updateKpi, KpiData, Transaction } from '../api';
+import { getKpis, getTransactions, updateKpi, deleteTransaction, KpiData, Transaction } from '../supabaseApi';
 import toast from 'react-hot-toast';
 
 export const DashboardPage = () => {
@@ -27,13 +27,24 @@ export const DashboardPage = () => {
                 getTransactions() // This returns array of Transaction
             ]);
             setKpis(kpiData);
-            setTransactions(txData.slice(0, 5)); // Take only last 5
+            setTransactions(txData.data.slice(0, 5)); // Take only last 5
         } catch (error) {
             console.error(error);
             toast.error('Error al cargar datos del dashboard');
         } finally {
             setLoading(false);
             setRefreshing(false);
+        }
+    };
+
+    const handleDeleteTransaction = async (id: string) => {
+        if (!confirm('¿Está seguro de eliminar esta transacción?')) return;
+        try {
+            await deleteTransaction(id);
+            toast.success('Transacción eliminada');
+            fetchData();
+        } catch (error) {
+            toast.error('Error al eliminar');
         }
     };
 
@@ -247,12 +258,13 @@ export const DashboardPage = () => {
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Descripción</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Categoría</th>
                                 <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Monto</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
                             {transactions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-[var(--muted)]">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-[var(--muted)]">
                                         No hay transacciones recientes
                                     </td>
                                 </tr>
@@ -273,6 +285,15 @@ export const DashboardPage = () => {
                                         <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-bold ${tx.type === 'ingreso' ? 'text-emerald-500' : 'text-rose-500'
                                             }`}>
                                             {tx.type === 'ingreso' ? '+' : '-'} {formatCurrency(Number(tx.amount))}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                            <button
+                                                onClick={() => handleDeleteTransaction(tx.id)}
+                                                className="text-rose-500 hover:text-rose-700 transition-colors"
+                                                title="Eliminar"
+                                            >
+                                                Eliminar
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

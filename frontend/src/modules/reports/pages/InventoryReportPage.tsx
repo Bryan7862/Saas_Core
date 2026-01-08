@@ -21,11 +21,11 @@ export const InventoryReportPage = () => {
     const stockLevels = products.slice(0, 8).map(p => ({
         name: p.name.length > 15 ? p.name.substring(0, 12) + '...' : p.name,
         stock: p.stock,
-        min: p.minStock
+        min: p.min_stock
     }));
 
     const totalItems = products.reduce((acc, p) => acc + p.stock, 0);
-    const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
+    const lowStockCount = products.filter(p => p.stock <= p.min_stock).length;
     const inventoryValue = products.reduce((acc, p) => acc + (p.price * p.stock), 0);
 
     return (

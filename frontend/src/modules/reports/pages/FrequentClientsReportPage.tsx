@@ -1,20 +1,55 @@
-import { useClients } from '../../clients/context/ClientsContext';
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Users, Award, Zap, Star } from 'lucide-react';
+import { Users, Award, Zap, Star, Loader2 } from 'lucide-react';
+import { getFrequentClients, ClientFrequency } from '../supabaseApi';
 
 const COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef'];
 
 export const FrequentClientsReportPage = () => {
-    const { clients } = useClients();
+    const [topClientsData, setTopClientsData] = useState<ClientFrequency[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Mock analysis data based on current clients
-    const topClientsData = clients.slice(0, 5).map((c, i) => ({
-        name: c.name.split(' ')[0], // Short name for chart
-        fullName: c.name,
-        purchases: 15 - (i * 2), // Mock data
-        volume: 12000 - (i * 1500), // Mock data
-        points: 1200 - (i * 100)
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const clients = await getFrequentClients();
+                setTopClientsData(clients.slice(0, 5));
+            } catch (err) {
+                console.error('Error loading frequent clients:', err);
+                setError('Error al cargar datos de clientes frecuentes');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    // Prepare chart data with short names
+    const chartData = topClientsData.map(c => ({
+        ...c,
+        shortName: c.name.split(' ')[0]
     }));
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+                <span className="ml-2 text-[var(--muted)]">Cargando clientes frecuentes...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <p className="text-red-500">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -31,33 +66,39 @@ export const FrequentClientsReportPage = () => {
 
             {/* Top 3 Medals */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {topClientsData.slice(0, 3).map((client, index) => (
-                    <div key={index} className="relative bg-[var(--surface)] p-6 rounded-xl border border-[var(--border)] overflow-hidden">
-                        <div className={`absolute top-0 right-0 p-2 text-white font-bold text-xs rounded-bl-xl
-                            ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-600'}`}>
-                            #{index + 1}
+                {topClientsData.length > 0 ? (
+                    topClientsData.slice(0, 3).map((client, index) => (
+                        <div key={client.id} className="relative bg-[var(--surface)] p-6 rounded-xl border border-[var(--border)] overflow-hidden">
+                            <div className={`absolute top-0 right-0 p-2 text-white font-bold text-xs rounded-bl-xl
+                                ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-600'}`}>
+                                #{index + 1}
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-[var(--bg-primary)] border-2 border-[var(--border)] flex items-center justify-center font-bold text-lg">
+                                    {client.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold truncate w-32">{client.name}</h4>
+                                    <p className="text-xs text-[var(--muted)]">{client.purchases} compras totales</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 grid grid-cols-2 gap-2 text-center border-t border-[var(--border)] pt-4">
+                                <div>
+                                    <p className="text-[10px] text-[var(--muted)] uppercase">Volumen</p>
+                                    <p className="text-sm font-bold">S/ {client.volume.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-[var(--muted)] uppercase">Puntos</p>
+                                    <p className="text-sm font-bold text-[var(--primary)]">{client.points}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-[var(--bg-primary)] border-2 border-[var(--border)] flex items-center justify-center font-bold text-lg">
-                                {client.name.charAt(0)}
-                            </div>
-                            <div>
-                                <h4 className="font-bold truncate w-32">{client.fullName}</h4>
-                                <p className="text-xs text-[var(--muted)]">{client.purchases} compras totales</p>
-                            </div>
-                        </div>
-                        <div className="mt-4 grid grid-cols-2 gap-2 text-center border-t border-[var(--border)] pt-4">
-                            <div>
-                                <p className="text-[10px] text-[var(--muted)] uppercase">Volumen</p>
-                                <p className="text-sm font-bold">S/ {client.volume.toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-[var(--muted)] uppercase">Puntos</p>
-                                <p className="text-sm font-bold text-[var(--primary)]">{client.points}</p>
-                            </div>
-                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-3 flex items-center justify-center h-32 text-[var(--muted)]">
+                        No hay clientes registrados
                     </div>
-                ))}
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -68,22 +109,28 @@ export const FrequentClientsReportPage = () => {
                         Top 5 Clientes por Volumen de Compra (S/)
                     </h3>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topClientsData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                                <XAxis dataKey="name" tick={{ fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    cursor={{ fill: 'var(--bg-primary)', opacity: 0.5 }}
-                                    contentStyle={{ backgroundColor: 'var(--bg-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                                />
-                                <Bar dataKey="volume" radius={[4, 4, 0, 0]} barSize={40}>
-                                    {topClientsData.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                                    <XAxis dataKey="shortName" tick={{ fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+                                    <Tooltip
+                                        cursor={{ fill: 'var(--bg-primary)', opacity: 0.5 }}
+                                        contentStyle={{ backgroundColor: 'var(--bg-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                                    />
+                                    <Bar dataKey="volume" radius={[4, 4, 0, 0]} barSize={40}>
+                                        {chartData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-[var(--muted)]">
+                                No hay datos de volumen
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -100,7 +147,13 @@ export const FrequentClientsReportPage = () => {
                                     <Users size={20} />
                                 </div>
                                 <p className="text-sm text-[var(--muted)]">
-                                    El <span className="text-[var(--text)] font-bold">20% de tus clientes</span> genera el <span className="text-[var(--text)] font-bold">80% de tus ingresos</span> mensuales.
+                                    {topClientsData.length > 0 ? (
+                                        <>
+                                            El <span className="text-[var(--text)] font-bold">top {Math.min(topClientsData.length, 5)} clientes</span> representan el núcleo de tus <span className="text-[var(--text)] font-bold">ingresos recurrentes</span>.
+                                        </>
+                                    ) : (
+                                        'Registra clientes para ver insights de fidelización.'
+                                    )}
                                 </p>
                             </div>
                             <div className="flex gap-4">
@@ -108,7 +161,13 @@ export const FrequentClientsReportPage = () => {
                                     <Award size={20} />
                                 </div>
                                 <p className="text-sm text-[var(--muted)]">
-                                    La frecuencia promedio de compra ha <span className="text-emerald-500 font-bold">subido un 5%</span> este último mes.
+                                    {topClientsData.length > 0 ? (
+                                        <>
+                                            Volumen total de top clientes: <span className="text-emerald-500 font-bold">S/ {topClientsData.reduce((sum, c) => sum + c.volume, 0).toLocaleString()}</span>
+                                        </>
+                                    ) : (
+                                        'Los datos de volumen aparecerán cuando tengas clientes registrados.'
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -120,7 +179,7 @@ export const FrequentClientsReportPage = () => {
                             Tip de Negocio
                         </h4>
                         <p className="text-blue-100 text-sm leading-relaxed">
-                            Ofrece descuentos exclusivos a tus 3 mejores clientes el próximo mes para asegurar su retención y aumentar su ticket promedio.
+                            Ofrece descuentos exclusivos a tus mejores clientes el próximo mes para asegurar su retención y aumentar su ticket promedio.
                         </p>
                     </div>
                 </div>

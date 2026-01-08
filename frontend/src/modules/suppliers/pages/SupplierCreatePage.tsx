@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Save, ArrowLeft, Mail, Phone, MapPin, Building, User, Tag } from 'lucide-react';
+import { Save, ArrowLeft, Mail, Phone, MapPin, Building, User, Tag, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useSuppliers } from '../context/SuppliersContext';
 
 export const SupplierCreatePage = () => {
@@ -20,14 +21,22 @@ export const SupplierCreatePage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.name.trim() || !formData.contactName.trim()) {
+            toast.error('El nombre de la empresa y contacto son requeridos');
+            return;
+        }
+
         setLoading(true);
 
-        // Simulation
-        setTimeout(() => {
-            addSupplier(formData);
-            setLoading(false);
+        try {
+            await addSupplier(formData);
             navigate('/suppliers');
-        }, 800);
+        } catch {
+            // Error handled by context
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -143,17 +152,27 @@ export const SupplierCreatePage = () => {
                         <button
                             type="button"
                             onClick={() => navigate(-1)}
-                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--bg-primary)] transition-colors"
+                            disabled={loading}
+                            className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--bg-primary)] transition-colors disabled:opacity-50"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 flex items-center gap-2 transition-all shadow-md active:scale-95"
+                            className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 flex items-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-50"
                         >
-                            <Save size={18} />
-                            {loading ? 'Registrando...' : 'Registrar Proveedor'}
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Registrando...
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={18} />
+                                    Registrar Proveedor
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

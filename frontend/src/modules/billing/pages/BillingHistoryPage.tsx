@@ -1,21 +1,52 @@
-import { useState } from 'react';
-import { History, Calendar, Search, ArrowUpDown, ExternalLink, MessageSquare } from 'lucide-react';
-
-const historyLogs = [
-    { id: 1, event: 'Emisión de Factura F001-0002', date: '2026-01-04 15:42', status: 'Exitoso', detail: 'CDR Aceptado por SUNAT' },
-    { id: 2, event: 'Anulación de Boleta B001-0039', date: '2026-01-04 12:15', status: 'Pendiente', detail: 'Comunicación de baja enviada' },
-    { id: 3, event: 'Actualización de Certificado', date: '2026-01-03 09:30', status: 'Exitoso', detail: 'Certificado PFX cargado' },
-    { id: 4, event: 'Error en Emisión F001-0001', date: '2026-01-02 18:20', status: 'Error', detail: 'Error de conexión con el OSE' },
-    { id: 5, event: 'Emisión de Boleta B001-0038', date: '2026-01-01 10:05', status: 'Exitoso', detail: 'XML enviado y firmado' },
-];
+import { useState, useEffect } from 'react';
+import { History, Calendar, Search, ArrowUpDown, ExternalLink, MessageSquare, Loader2 } from 'lucide-react';
+import { getBillingHistory, BillingHistoryLog } from '../supabaseApi';
 
 export const BillingHistoryPage = () => {
+    const [historyLogs, setHistoryLogs] = useState<BillingHistoryLog[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const loadHistory = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const logs = await getBillingHistory(50);
+                setHistoryLogs(logs);
+            } catch (err) {
+                console.error('Error loading billing history:', err);
+                setError('Error al cargar historial');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadHistory();
+    }, []);
 
     const filteredLogs = historyLogs.filter(log =>
         log.event.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.detail.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+                <span className="ml-2 text-[var(--muted)]">Cargando historial...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <p className="text-red-500">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -56,51 +87,61 @@ export const BillingHistoryPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
-                            {filteredLogs.map((log) => (
-                                <tr key={log.id} className="hover:bg-[var(--bg-primary)]/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-full bg-[var(--bg-primary)] text-[var(--muted)]">
-                                                <History size={16} />
+                            {filteredLogs.length > 0 ? (
+                                filteredLogs.map((log) => (
+                                    <tr key={log.id} className="hover:bg-[var(--bg-primary)]/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-full bg-[var(--bg-primary)] text-[var(--muted)]">
+                                                    <History size={16} />
+                                                </div>
+                                                <span className="font-bold text-sm">{log.event}</span>
                                             </div>
-                                            <span className="font-bold text-sm">{log.event}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-[var(--muted)] font-mono">{log.date}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                                            ${log.status === 'Exitoso' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                                                log.status === 'Error' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
-                                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                                            {log.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm italic text-[var(--muted)]">
-                                        {log.detail}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button className="p-1.5 hover:bg-[var(--bg-primary)] rounded-md text-[var(--muted)] hover:text-[var(--primary)] transition-colors" title="Ver Log Completo">
-                                                <ExternalLink size={16} />
-                                            </button>
-                                            <button className="p-1.5 hover:bg-[var(--bg-primary)] rounded-md text-[var(--muted)] hover:text-[var(--primary)] transition-colors" title="Consultar Ticket">
-                                                <MessageSquare size={16} />
-                                            </button>
-                                        </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-[var(--muted)] font-mono">{log.date}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                                ${log.status === 'Exitoso' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                                                    log.status === 'Error' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' :
+                                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                {log.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm italic text-[var(--muted)]">
+                                            {log.detail}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button className="p-1.5 hover:bg-[var(--bg-primary)] rounded-md text-[var(--muted)] hover:text-[var(--primary)] transition-colors" title="Ver Log Completo">
+                                                    <ExternalLink size={16} />
+                                                </button>
+                                                <button className="p-1.5 hover:bg-[var(--bg-primary)] rounded-md text-[var(--muted)] hover:text-[var(--primary)] transition-colors" title="Consultar Ticket">
+                                                    <MessageSquare size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-[var(--muted)]">
+                                        No hay eventos registrados
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div className="flex items-center justify-center pt-4">
-                <button className="text-sm font-bold text-[var(--primary)] hover:underline flex items-center gap-2">
-                    <ArrowUpDown size={14} />
-                    CARGAR MÁS REGISTROS
-                </button>
-            </div>
+            {filteredLogs.length > 0 && (
+                <div className="flex items-center justify-center pt-4">
+                    <button className="text-sm font-bold text-[var(--primary)] hover:underline flex items-center gap-2">
+                        <ArrowUpDown size={14} />
+                        CARGAR MÁS REGISTROS
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

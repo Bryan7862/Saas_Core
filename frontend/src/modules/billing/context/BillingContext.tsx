@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
+import * as api from '../supabaseApi';
 
+// Re-export types with UI-friendly property names
 export interface Invoice {
     id: string;
     number: string;
@@ -24,53 +26,152 @@ export interface SunatConfig {
 interface BillingContextType {
     invoices: Invoice[];
     sunatConfig: SunatConfig;
-    updateSunatConfig: (config: SunatConfig) => void;
-    addInvoice: (invoice: Omit<Invoice, 'id' | 'status'>) => void;
-    cancelInvoice: (id: string) => void;
+    loading: boolean;
+    error: string | null;
+    updateSunatConfig: (config: SunatConfig) => Promise<void>;
+    addInvoice: (invoice: Omit<Invoice, 'id' | 'status'>) => Promise<void>;
+    cancelInvoice: (id: string) => Promise<void>;
+    refreshData: () => Promise<void>;
 }
+
+const defaultSunatConfig: SunatConfig = {
+    ruc: '',
+    solUser: '',
+    solPass: '',
+    environment: 'Pruebas',
+    certificateStatus: 'Vacio'
+};
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
 
 export const BillingProvider = ({ children }: { children: ReactNode }) => {
-    const [invoices, setInvoices] = useState<Invoice[]>([
-        { id: '1', number: 'F001-0001', type: 'Factura', client: 'Corporación Alpha', date: '2026-01-02', amount: 1540.50, status: 'Aceptado' },
-        { id: '2', number: 'B001-0042', type: 'Boleta', client: 'Juan Perez', date: '2026-01-03', amount: 85.00, status: 'Aceptado' },
-        { id: '3', number: 'F001-0002', type: 'Factura', client: 'Servicios Logísticos SAC', date: '2026-01-04', amount: 2400.00, status: 'Emitido' },
-    ]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [sunatConfig, setSunatConfig] = useState<SunatConfig>(defaultSunatConfig);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const [sunatConfig, setSunatConfig] = useState<SunatConfig>({
-        ruc: '20601234567',
-        solUser: 'MODDATOS',
-        solPass: 'moddatos',
-        environment: 'Pruebas',
-        certificateStatus: 'Activo'
-    });
+    // Load data from Supabase on mount
+    const loadData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [invoicesData, configData] = await Promise.all([
+                api.getInvoices().catch(() => []),
+                api.getSunatConfig().catch(() => null)
+            ]);
 
-    const updateSunatConfig = (config: SunatConfig) => {
-        setSunatConfig(config);
-        toast.success('Configuración SUNAT actualizada correctamente');
+            // Map API data to UI format
+            setInvoices(invoicesData.map(inv => ({
+                id: inv.id,
+                number: inv.number,
+                type: inv.type,
+                client: inv.client,
+                date: inv.date,
+                amount: inv.amount,
+                status: inv.status,
+                xmlUrl: inv.xml_url,
+                pdfUrl: inv.pdf_url
+            })));
+
+            if (configData) {
+                setSunatConfig({
+                    ruc: configData.ruc,
+                    solUser: configData.sol_user,
+                    solPass: configData.sol_pass,
+                    environment: configData.environment,
+                    certificateStatus: configData.certificate_status
+                });
+            }
+        } catch (err) {
+            console.error('Error loading billing data:', err);
+            setError('Error al cargar datos de facturación');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const addInvoice = (invoice: Omit<Invoice, 'id' | 'status'>) => {
-        const newInvoice: Invoice = {
-            ...invoice,
-            id: Math.random().toString(36).substr(2, 9),
-            status: 'Emitido'
-        };
-        setInvoices([newInvoice, ...invoices]);
-        toast.success(`Comprobante ${newInvoice.number} generado`);
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const refreshData = async () => {
+        await loadData();
     };
 
-    const cancelInvoice = (id: string) => {
-        setInvoices(invoices.map(inv =>
-            inv.id === id ? { ...inv, status: 'Anulado' } : inv
-        ));
-        toast.error('Comprobante anulado');
+    const updateSunatConfig = async (config: SunatConfig) => {
+        try {
+            await api.upsertSunatConfig({
+                ruc: config.ruc,
+                sol_user: config.solUser,
+                sol_pass: config.solPass,
+                environment: config.environment,
+                certificate_status: config.certificateStatus
+            });
+            setSunatConfig(config);
+            toast.success('Configuración SUNAT actualizada correctamente');
+        } catch (err) {
+            console.error('Error updating SUNAT config:', err);
+            toast.error('Error al actualizar configuración SUNAT');
+            throw err;
+        }
+    };
+
+    const addInvoice = async (invoice: Omit<Invoice, 'id' | 'status'>) => {
+        try {
+            const newInvoice = await api.createInvoice({
+                number: invoice.number,
+                type: invoice.type,
+                client: invoice.client,
+                date: invoice.date,
+                amount: invoice.amount
+            });
+
+            setInvoices(prev => [{
+                id: newInvoice.id,
+                number: newInvoice.number,
+                type: newInvoice.type,
+                client: newInvoice.client,
+                date: newInvoice.date,
+                amount: newInvoice.amount,
+                status: newInvoice.status,
+                xmlUrl: newInvoice.xml_url,
+                pdfUrl: newInvoice.pdf_url
+            }, ...prev]);
+
+            toast.success(`Comprobante ${invoice.number} generado`);
+        } catch (err) {
+            console.error('Error creating invoice:', err);
+            toast.error('Error al generar comprobante');
+            throw err;
+        }
+    };
+
+    const cancelInvoice = async (id: string) => {
+        try {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (!invoice) {
+                toast.error('Comprobante no encontrado');
+                return;
+            }
+
+            await api.cancelInvoice(id, invoice.number);
+
+            setInvoices(prev => prev.map(inv =>
+                inv.id === id ? { ...inv, status: 'Anulado' } : inv
+            ));
+
+            toast.error('Comprobante anulado');
+        } catch (err) {
+            console.error('Error canceling invoice:', err);
+            toast.error('Error al anular comprobante');
+            throw err;
+        }
     };
 
     return (
         <BillingContext.Provider value={{
-            invoices, sunatConfig, updateSunatConfig, addInvoice, cancelInvoice
+            invoices, sunatConfig, loading, error,
+            updateSunatConfig, addInvoice, cancelInvoice, refreshData
         }}>
             {children}
         </BillingContext.Provider>

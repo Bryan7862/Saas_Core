@@ -73,8 +73,8 @@ export function CreateInvoicePage() {
                                     <div>
                                         <label className="block text-sm font-medium text-muted mb-1">Precio</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-2 text-muted">$</span>
-                                            <input type="number" defaultValue="29.00" className="w-full pl-8 pr-4 py-2 rounded-lg border border-border bg-input text-text focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                                            <span className="absolute left-3 top-2 text-muted">S/</span>
+                                            <input type="number" defaultValue="29.00" className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-input text-text focus:outline-none focus:ring-2 focus:ring-primary/20" />
                                         </div>
                                     </div>
                                 </div>
@@ -130,16 +130,16 @@ export function CreateInvoicePage() {
                         <div className="space-y-3 mb-6">
                             <div className="flex justify-between text-muted">
                                 <span>Subtotal</span>
-                                <span>$24.58</span>
+                                <span>S/ 24.58</span>
                             </div>
                             <div className="flex justify-between text-muted">
                                 <span>IGV (18%)</span>
-                                <span>$4.42</span>
+                                <span>S/ 4.42</span>
                             </div>
                             <div className="h-px bg-border my-2"></div>
                             <div className="flex justify-between text-xl font-bold text-text">
                                 <span>Total</span>
-                                <span>$29.00</span>
+                                <span>S/ 29.00</span>
                             </div>
                         </div>
 

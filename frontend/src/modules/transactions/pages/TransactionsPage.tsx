@@ -74,14 +74,14 @@ export const TransactionsPage = () => {
                 <div className="bg-[var(--card-bg)] p-4 rounded-lg shadow border border-[var(--border)]">
                     <div className="text-sm text-[var(--muted)] mb-1">Total Payments ({month})</div>
                     <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        ${summary?.COMPLETED?.total?.toFixed(2) || '0.00'}
+                        S/ {summary?.COMPLETED?.total?.toFixed(2) || '0.00'}
                     </div>
                     <div className="text-xs text-[var(--muted)]">{summary?.COMPLETED?.count || 0} Successful Transactions</div>
                 </div>
                 <div className="bg-[var(--card-bg)] p-4 rounded-lg shadow border border-[var(--border)]">
                     <div className="text-sm text-[var(--muted)] mb-1">Failed Attempts ({month})</div>
                     <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                        ${summary?.FAILED?.total?.toFixed(2) || '0.00'}
+                        S/ {summary?.FAILED?.total?.toFixed(2) || '0.00'}
                     </div>
                     <div className="text-xs text-[var(--muted)]">{summary?.FAILED?.count || 0} Failed Attempts</div>
                 </div>

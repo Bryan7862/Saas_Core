@@ -571,7 +571,7 @@ export function DashboardPage() {
                                     <div>
                                         <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto (S/)</label>
                                         <div className="relative">
-                                            <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)] text-sm font-medium">S/</span>
                                             <input
                                                 type="number"
                                                 placeholder="0.00"
@@ -640,7 +640,7 @@ export function DashboardPage() {
                                     <div>
                                         <label className="block text-sm font-medium text-[var(--muted)] mb-1">Monto de Venta (S/)</label>
                                         <div className="relative">
-                                            <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)] text-sm font-medium">S/</span>
                                             <input
                                                 type="number"
                                                 placeholder="0.00"

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import {
     Building2, Globe, Percent, ShieldCheck,
-    Save, Camera, Languages, DollarSign,
+    Save, Camera, Languages, Coins,
     Bell, Lock, Smartphone, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -281,15 +281,14 @@ export function SettingsPage() {
                             <div className="p-6 space-y-4">
                                 <div>
                                     <label className="text-xs font-bold text-[var(--muted)] uppercase mb-1 flex items-center gap-1.5">
-                                        <DollarSign size={14} /> Moneda Principal
+                                        <Coins size={14} /> Moneda Principal
                                     </label>
                                     <select
                                         value={formData.currency || 'PEN'}
                                         onChange={(e) => handleChange('currency', e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] outline-none"
                                     >
-                                        <option value="PEN">Soles (S/)</option>
-                                        <option value="USD">Dólares ($)</option>
+                                        <option value="PEN">Soles Peruanos (S/)</option>
                                     </select>
                                 </div>
                                 <div>

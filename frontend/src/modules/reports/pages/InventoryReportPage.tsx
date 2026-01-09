@@ -1,6 +1,6 @@
 import { useInventory } from '../../inventory/context/InventoryContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Package, TrendingDown, DollarSign } from 'lucide-react';
+import { Package, TrendingDown, Coins } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -62,7 +62,7 @@ export const InventoryReportPage = () => {
                 <div className="bg-[var(--surface)] p-6 rounded-xl border border-[var(--border)] shadow-sm">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg dark:bg-emerald-900/20">
-                            <DollarSign size={24} />
+                            <Coins size={24} />
                         </div>
                         <div>
                             <p className="text-sm text-[var(--muted)]">Valor del Inventario</p>

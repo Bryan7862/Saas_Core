@@ -172,10 +172,7 @@ export class AuthService {
     }
 
     async getUsers(requestingUserId: string, companyId?: string): Promise<User[]> {
-        console.log(`[getUsers] Requesting: ${requestingUserId}, Company: ${companyId}`); // DEBUG
-
         if (!companyId) {
-            console.warn('[getUsers] No companyId provided'); // DEBUG
             return [];
         }
 
@@ -189,7 +186,6 @@ export class AuthService {
             .getOne();
 
         if (!membership) {
-            console.error(`[getUsers] Access Denied for ${requestingUserId} in ${companyId}`); // DEBUG
             throw new BadRequestException('Access Denied: You are not a member of this organization context or your account is suspended');
         }
 
@@ -201,7 +197,6 @@ export class AuthService {
         // .andWhere('user.status = :status', { status: UserStatus.ACTIVE });
 
         const results = await query.getMany();
-        console.log(`[getUsers] Found ${results.length} users`); // DEBUG
         return results;
     }
 

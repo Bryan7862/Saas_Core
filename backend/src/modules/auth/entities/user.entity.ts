@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { UserRole } from '../../iam/entities/user-role.entity';
 import { Company } from '../../organizations/entities/company.entity';
 
@@ -42,6 +42,7 @@ export class User {
     @Column({ type: 'json', nullable: true, name: 'social_links' })
     socialLinks: Record<string, string>;
 
+    @Index()
     @Column({ unique: true })
     email: string;
 

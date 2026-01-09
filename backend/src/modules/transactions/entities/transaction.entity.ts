@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 
 @Entity('transactions')
@@ -37,6 +37,7 @@ export class Transaction {
 
     // --- SaaS Payment Fields ---
 
+    @Index()
     @Column({ name: 'organization_id', nullable: true })
     organizationId: string;
 

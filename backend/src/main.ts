@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import * as compression from 'compression';
@@ -8,6 +8,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
+    const logger = new Logger('Bootstrap');
     const app = await NestFactory.create(AppModule, {
         rawBody: true, // Needed for Stripe Webhook Signature verification
     });
@@ -34,6 +35,6 @@ async function bootstrap() {
     // Boot
     const port = configService.get('PORT') || 3000;
     await app.listen(port);
-    console.log(`Application is running on: ${await app.getUrl()}`);
+    logger.log(`🚀 Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

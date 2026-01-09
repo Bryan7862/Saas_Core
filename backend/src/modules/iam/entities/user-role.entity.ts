@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique, Index } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Role } from './role.entity';
 import { Company } from '../../organizations/entities/company.entity';
@@ -9,9 +9,11 @@ export class UserRole {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Index()
     @Column({ name: 'user_id' })
     userId: string;
 
+    @Index()
     @Column({ name: 'company_id' })
     companyId: string;
 

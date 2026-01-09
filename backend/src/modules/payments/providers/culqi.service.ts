@@ -1,9 +1,10 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
 @Injectable()
 export class CulqiService implements OnModuleInit {
+    private readonly logger = new Logger(CulqiService.name);
     private culqi: AxiosInstance;
     private publicKey: string;
     private secretKey: string;
@@ -16,7 +17,7 @@ export class CulqiService implements OnModuleInit {
         this.publicKey = this.configService.get<string>('CULQI_PUBLIC_KEY') || 'pk_test_placeholder';
 
         if (this.secretKey === 'sk_test_placeholder') {
-            console.warn('⚠️ [Culqi] Keys not set. Activando MOCK MODE. Los pagos serán simulados.');
+            this.logger.warn('⚠️ Keys not set. Activando MOCK MODE. Los pagos serán simulados.');
             this.isMockMode = true;
         }
 
@@ -31,7 +32,7 @@ export class CulqiService implements OnModuleInit {
 
     async createOrder(organizationId: string, amount: number, description: string, email: string) {
         if (this.isMockMode) {
-            console.log(`[Culqi Mock] Creating Order for ${amount} PEN`);
+            this.logger.debug(`[Mock] Creating Order for ${amount} PEN`);
             return {
                 object: "order",
                 id: `ord_mock_${organizationId}_${Date.now()}`,
@@ -66,7 +67,7 @@ export class CulqiService implements OnModuleInit {
             });
             return response.data;
         } catch (error) {
-            console.error('Culqi Create Order Error:', error.response?.data || error.message);
+            this.logger.error(`Create Order Error: ${error.response?.data || error.message}`);
             throw new Error('Failed to create Culqi Order');
         }
     }
@@ -78,7 +79,7 @@ export class CulqiService implements OnModuleInit {
     // --- Webhook Verification ---
     async getCharge(chargeId: string) {
         if (this.isMockMode || chargeId.startsWith('chr_mock_')) {
-            console.log(`[Culqi Mock] Verifying Charge ${chargeId}`);
+            this.logger.debug(`[Mock] Verifying Charge ${chargeId}`);
             return {
                 object: "charge",
                 id: chargeId,
@@ -97,7 +98,7 @@ export class CulqiService implements OnModuleInit {
             const response = await this.culqi.get(`/charges/${chargeId}`);
             return response.data;
         } catch (error) {
-            console.error('Culqi Get Charge Error:', error.response?.data || error.message);
+            this.logger.error(`Get Charge Error: ${error.response?.data || error.message}`);
             // If 404, returns null or throws. 
             // Better to throw so we know verify failed.
             throw new Error('Failed to verify charge with Culqi');

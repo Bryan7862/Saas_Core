@@ -9,9 +9,11 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { User } from '../auth/entities/user.entity';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class IamService implements OnModuleInit {
+    private readonly logger = new Logger(IamService.name);
     constructor(
         @InjectRepository(Role)
         private roleRepository: Repository<Role>,
@@ -55,7 +57,7 @@ export class IamService implements OnModuleInit {
     }
 
     private async seedPermissions() {
-        console.log('🌱 Seeding Permissions...');
+        this.logger.log('🌱 Seeding Permissions...');
 
         // 1. Create Permissions if not exist
         for (const p of this.STANDARD_PERMISSIONS) {
@@ -63,7 +65,7 @@ export class IamService implements OnModuleInit {
             let permission = await this.permissionRepository.findOne({ where: { code } });
 
             if (!permission) {
-                console.log(`Creating permission: ${code}`);
+                this.logger.log(`Creating permission: ${code}`);
                 permission = this.permissionRepository.create({
                     code,
                     resource: p.resource,
@@ -83,7 +85,7 @@ export class IamService implements OnModuleInit {
             }
         }
 
-        console.log('✅ Permissions Seeded');
+        this.logger.log('✅ Permissions Seeded');
     }
 
     async createRole(createRoleDto: CreateRoleDto): Promise<Role> {

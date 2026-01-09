@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
@@ -18,6 +18,8 @@ import { ConfigService } from '@nestjs/config';
     },
 })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    private readonly logger = new Logger(NotificationsGateway.name);
+
     @WebSocketServer()
     server: Server;
 
@@ -33,7 +35,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
                 client.handshake.auth?.token || client.handshake.query?.token as string;
 
             if (!token) {
-                console.log(`[Socket] Client ${client.id} rejected: No token`);
+                this.logger.warn(`Client ${client.id} rejected: No token`);
                 client.disconnect();
                 return;
             }
@@ -46,15 +48,15 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
             const roomName = `user_${payload.sub}`;
             await client.join(roomName);
 
-            console.log(`[Socket] Client ${client.id} joined room ${roomName}`);
+            this.logger.log(`Client ${client.id} joined room ${roomName}`);
         } catch (error) {
-            console.error(`[Socket] Connection error for ${client.id}:`, error.message);
+            this.logger.error(`Connection error for ${client.id}: ${error.message}`);
             client.disconnect();
         }
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`[Socket] Client ${client.id} disconnected`);
+        this.logger.log(`Client ${client.id} disconnected`);
     }
 
     // Utility to send message to user room

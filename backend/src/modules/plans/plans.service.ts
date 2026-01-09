@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Plan } from './entities/plan.entity';
 import { PlanCode } from './enums/plan-code.enum';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class PlansService implements OnModuleInit {
+    private readonly logger = new Logger(PlansService.name);
     constructor(
         @InjectRepository(Plan)
         private planRepository: Repository<Plan>,
@@ -20,7 +22,7 @@ export class PlansService implements OnModuleInit {
         const count = await this.planRepository.count();
         if (count > 0) return;
 
-        console.log('Seeding Subscription Plans...');
+        this.logger.log('🌱 Seeding Subscription Plans...');
         const plans = [
             { code: PlanCode.FREE, name: 'Gratuito', pricePe: 0, description: 'Para probar el sistema', features: { maxUsers: 1, maxStorage: '1GB', canAccessAnalytics: false } },
             { code: PlanCode.BASIC, name: 'Emprendedor', pricePe: 29.90, description: 'Ideal para iniciar', features: { maxUsers: 5, maxStorage: '5GB', canAccessAnalytics: true } },
@@ -34,7 +36,7 @@ export class PlansService implements OnModuleInit {
                 await this.planRepository.save(this.planRepository.create(p));
             }
         }
-        console.log('Plans seeded successfully.');
+        this.logger.log('✅ Plans seeded successfully.');
     }
 
     async findAll(): Promise<Plan[]> {

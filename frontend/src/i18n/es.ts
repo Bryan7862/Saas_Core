@@ -1,0 +1,93 @@
+// Translations for the application
+// Add new languages by creating new files following this structure
+
+export const esTranslations = {
+    common: {
+        save: 'Guardar',
+        cancel: 'Cancelar',
+        delete: 'Eliminar',
+        edit: 'Editar',
+        create: 'Crear',
+        search: 'Buscar',
+        loading: 'Cargando...',
+        error: 'Error',
+        success: 'Éxito',
+        confirm: 'Confirmar',
+        back: 'Volver',
+        next: 'Siguiente',
+        previous: 'Anterior',
+        yes: 'Sí',
+        no: 'No',
+        actions: 'Acciones',
+        noData: 'Sin datos',
+        showing: 'Mostrando',
+        of: 'de',
+    },
+    auth: {
+        login: 'Iniciar Sesión',
+        logout: 'Cerrar Sesión',
+        register: 'Registrarse',
+        email: 'Correo Electrónico',
+        password: 'Contraseña',
+        confirmPassword: 'Confirmar Contraseña',
+        forgotPassword: '¿Olvidaste tu contraseña?',
+        resetPassword: 'Restablecer Contraseña',
+        verifyEmail: 'Verificar Email',
+        welcomeBack: '¡Bienvenido de nuevo!',
+        createAccount: 'Crear Cuenta',
+    },
+    navigation: {
+        dashboard: 'Dashboard',
+        sales: 'Ventas',
+        inventory: 'Inventario',
+        clients: 'Clientes',
+        suppliers: 'Proveedores',
+        reports: 'Reportes',
+        billing: 'Facturación',
+        settings: 'Configuración',
+        profile: 'Mi Perfil',
+        users: 'Usuarios',
+        organizations: 'Organizaciones',
+    },
+    dashboard: {
+        totalSales: 'Ventas Totales',
+        transactions: 'Transacciones',
+        newClients: 'Nuevos Clientes',
+        avgTicket: 'Ticket Promedio',
+    },
+    inventory: {
+        products: 'Productos',
+        categories: 'Categorías',
+        stock: 'Stock',
+        lowStock: 'Stock Bajo',
+        price: 'Precio',
+        minStock: 'Stock Mínimo',
+    },
+    clients: {
+        name: 'Nombre',
+        phone: 'Teléfono',
+        lastPurchase: 'Última Compra',
+        totalPurchases: 'Total Compras',
+    },
+    suppliers: {
+        company: 'Empresa',
+        contact: 'Contacto',
+        ruc: 'RUC',
+    },
+    settings: {
+        general: 'General',
+        business: 'Información del Negocio',
+        currency: 'Moneda',
+        timezone: 'Zona Horaria',
+        language: 'Idioma',
+    },
+    errors: {
+        required: 'Este campo es requerido',
+        invalidEmail: 'Email inválido',
+        minLength: 'Mínimo {{count}} caracteres',
+        maxLength: 'Máximo {{count}} caracteres',
+        passwordMismatch: 'Las contraseñas no coinciden',
+    }
+};
+
+export type TranslationKeys = typeof esTranslations;

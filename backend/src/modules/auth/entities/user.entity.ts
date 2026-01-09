@@ -70,6 +70,18 @@ export class User {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
+    @Column({ name: 'reset_password_token', type: 'text', nullable: true })
+    resetPasswordToken: string | null;
+
+    @Column({ name: 'reset_password_expires', type: 'timestamp', nullable: true })
+    resetPasswordExpires: Date | null;
+
+    @Column({ name: 'email_verified', type: 'boolean', default: false })
+    emailVerified: boolean;
+
+    @Column({ name: 'email_verification_token', type: 'text', nullable: true })
+    emailVerificationToken: string | null;
+
     @OneToMany(() => UserRole, (userRole) => userRole.user)
     userRoles: UserRole[];
 }

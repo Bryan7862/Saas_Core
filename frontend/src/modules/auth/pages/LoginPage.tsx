@@ -127,8 +127,22 @@ export const LoginPage = () => {
                             transition: 'background-color 0.2s'
                         }}
                     >
-                        Sign In
+                        Iniciar Sesión
                     </button>
+
+                    <a
+                        href="/forgot-password"
+                        style={{
+                            display: 'block',
+                            textAlign: 'center',
+                            marginTop: '1rem',
+                            color: '#2563eb',
+                            fontSize: '0.875rem',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </a>
                 </form>
             </div>
         </div>

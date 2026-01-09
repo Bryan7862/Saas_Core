@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, ShoppingBag, CreditCard, Users, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { TrendingUp, ShoppingBag, CreditCard, Users, ArrowUpRight, ArrowDownRight, Loader2, Download, FileText } from 'lucide-react';
 import { getSalesTrend, getCategorySales, getSalesKPIs, SalesTrend, CategorySale } from '../supabaseApi';
 import { getProducts, Product } from '../../inventory/supabaseApi';
+import { exportToCSV, exportToPDFPrint, createHTMLTable } from '../../../lib/exportUtils';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -106,6 +107,54 @@ export const ReportsPage = () => {
                     <p className="text-[var(--muted)]">Análisis de rendimiento comercial y tendencias</p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => {
+                            const data = topProducts.map(p => ({
+                                name: p.name,
+                                sales: p.sales,
+                                revenue: p.revenue,
+                                stock: p.stock
+                            }));
+                            exportToCSV(data, [
+                                { header: 'Producto', key: 'name' },
+                                { header: 'Ventas', key: 'sales' },
+                                { header: 'Ingresos', key: 'revenue' },
+                                { header: 'Stock', key: 'stock' }
+                            ], 'reporte_ventas');
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                        <Download size={16} />
+                        Excel
+                    </button>
+                    <button
+                        onClick={() => {
+                            const tableHTML = createHTMLTable(topProducts, [
+                                { header: 'Producto', key: 'name' },
+                                { header: 'Ventas', key: 'sales' },
+                                { header: 'Ingresos', key: 'revenue' },
+                                { header: 'Stock', key: 'stock' }
+                            ]);
+                            const summary = `
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+                                    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                                        <div style="color: #6b7280; font-size: 12px; margin-bottom: 4px;">VENTAS TOTALES</div>
+                                        <div style="font-size: 24px; font-weight: bold;">${formatCurrency(kpis?.totalSales || 0)}</div>
+                                    </div>
+                                    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                                        <div style="color: #6b7280; font-size: 12px; margin-bottom: 4px;">TRANSACCIONES</div>
+                                        <div style="font-size: 24px; font-weight: bold;">${kpis?.transactions || 0}</div>
+                                    </div>
+                                </div>
+                                <h3 style="margin-top: 20px;">Productos Más Vendidos</h3>
+                            `;
+                            exportToPDFPrint('Reporte de Ventas', summary + tableHTML);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors"
+                    >
+                        <FileText size={16} />
+                        PDF
+                    </button>
                     <select className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none">
                         <option>Últimos 6 meses</option>
                         <option>Este año</option>
@@ -211,7 +260,7 @@ export const ReportsPage = () => {
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={categoryData}
+                                        data={categoryData as unknown as Array<Record<string, unknown>>}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={70}

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Body, Param, Headers, Req, UseGuards, Delete, Inject, forwardRef } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { RequirePermissions } from '../iam/decorators/require-permissions.decorator';
 import { PermissionsGuard } from '../iam/guards/permissions.guard';
 import { AuthService } from './auth.service';
@@ -6,6 +7,9 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { TrashService } from '../trash/trash.service';
 import { TrashAction, TrashEntityType } from '../trash/entities/trash-audit.entity';
@@ -30,6 +34,8 @@ export class AuthController {
         return this.authService.createUser(createUserDto, req.user.userId);
     }
 
+    // Rate limit login: 5 intentos por minuto para prevenir fuerza bruta
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
         const user = await this.authService.validateUser(loginDto.email, loginDto.password);
@@ -80,5 +86,29 @@ export class AuthController {
             'Manual Suspension via API'
         );
         return result;
+    }
+
+    // ============ PASSWORD RESET ============
+
+    @Post('forgot-password')
+    forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        return this.authService.forgotPassword(forgotPasswordDto.email);
+    }
+
+    @Post('reset-password')
+    resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+        return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+    }
+
+    // ============ EMAIL VERIFICATION ============
+
+    @Post('verify-email')
+    verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+        return this.authService.verifyEmail(verifyEmailDto.token);
+    }
+
+    @Post('resend-verification')
+    resendVerification(@Body('email') email: string) {
+        return this.authService.resendVerificationEmail(email);
     }
 }

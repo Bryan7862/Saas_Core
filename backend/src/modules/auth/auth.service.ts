@@ -13,6 +13,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { SubscriptionStatus } from '../subscriptions/enums/subscription-status.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { EmailService } from '../email/email.service';
 
 // const MAX_USERS_PER_ORGANIZATION = 8; // Removed hardcoded limit
 
@@ -26,6 +27,7 @@ export class AuthService {
         private readonly iamService: IamService,
         private readonly subscriptionsService: SubscriptionsService,
         private readonly notificationsService: NotificationsService,
+        private readonly emailService: EmailService,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -41,9 +43,13 @@ export class AuthService {
         // 2. Create Company (Delegated)
         const savedCompany = await this.organizationsService.create(null, { name: companyName });
 
-        // 3. Create User
+        // 3. Create User with verification token
         const salt = await bcrypt.genSalt();
         const passwordHash = await bcrypt.hash(password, salt);
+        const verificationToken = this.jwtService.sign(
+            { email, type: 'email-verification' },
+            { expiresIn: '24h' }
+        );
 
         const user = this.userRepository.create({
             email,
@@ -53,6 +59,8 @@ export class AuthService {
             defaultCompany: savedCompany,
             defaultCompanyId: savedCompany.id,
             status: UserStatus.ACTIVE,
+            emailVerified: false,
+            emailVerificationToken: verificationToken,
         });
         const savedUser = await this.userRepository.save(user);
 
@@ -73,6 +81,9 @@ export class AuthService {
             roleId: ownerRole.id,
             companyId: savedCompany.id,
         });
+
+        // 5. Send verification email
+        await this.emailService.sendVerificationEmail(email, firstName, verificationToken);
 
         return savedUser;
     }
@@ -285,6 +296,17 @@ export class AuthService {
         if (!user) {
             throw new BadRequestException('Invalid credentials');
         }
+
+        // Verificar que el usuario esté activo
+        if (user.status !== UserStatus.ACTIVE) {
+            throw new BadRequestException('Tu cuenta está suspendida. Contacta al administrador.');
+        }
+
+        // Verificar email verificado (descomentar para hacer obligatorio en producción)
+        // if (!user.emailVerified) {
+        //     throw new BadRequestException('Por favor verifica tu email antes de iniciar sesión.');
+        // }
+
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) {
             throw new BadRequestException('Invalid credentials');
@@ -343,5 +365,143 @@ export class AuthService {
             roles: user.userRoles.map(ur => ur.role.code),
             permissions: user.userRoles.flatMap(ur => ur.role.rolePermissions ? ur.role.rolePermissions.map(rp => rp.permission.code) : [])
         };
+    }
+
+    // ============ PASSWORD RESET ============
+
+    async forgotPassword(email: string): Promise<{ message: string }> {
+        const user = await this.userRepository.findOne({ where: { email } });
+
+        // Don't reveal if user exists or not (security)
+        if (!user) {
+            return { message: 'Si el email existe, recibirás un enlace de recuperación.' };
+        }
+
+        // Generate reset token (valid for 1 hour)
+        const resetToken = this.jwtService.sign(
+            { userId: user.id, type: 'password-reset' },
+            { expiresIn: '1h' }
+        );
+
+        // Store token hash in user record (optional, for added security)
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+        await this.userRepository.save(user);
+
+        // Send email
+        await this.emailService.sendPasswordResetEmail(email, resetToken);
+
+        return { message: 'Si el email existe, recibirás un enlace de recuperación.' };
+    }
+
+    async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+        try {
+            const payload = this.jwtService.verify(token);
+
+            if (payload.type !== 'password-reset') {
+                throw new BadRequestException('Token inválido');
+            }
+
+            const user = await this.userRepository.findOne({ where: { id: payload.userId } });
+
+            if (!user) {
+                throw new BadRequestException('Token inválido');
+            }
+
+            // Verify token matches stored token
+            if (user.resetPasswordToken !== token) {
+                throw new BadRequestException('Token inválido o ya usado');
+            }
+
+            // Check expiration
+            if (user.resetPasswordExpires && user.resetPasswordExpires < new Date()) {
+                throw new BadRequestException('El enlace ha expirado. Solicita uno nuevo.');
+            }
+
+            // Hash new password and save
+            user.passwordHash = await bcrypt.hash(newPassword, 10);
+            user.resetPasswordToken = null;
+            user.resetPasswordExpires = null;
+            await this.userRepository.save(user);
+
+            return { message: 'Contraseña actualizada correctamente.' };
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                throw new BadRequestException('El enlace ha expirado. Solicita uno nuevo.');
+            }
+            if (error.name === 'JsonWebTokenError') {
+                throw new BadRequestException('Token inválido');
+            }
+            throw error;
+        }
+    }
+
+    // ============ EMAIL VERIFICATION ============
+
+    async verifyEmail(token: string): Promise<{ message: string }> {
+        try {
+            const payload = this.jwtService.verify(token);
+
+            if (payload.type !== 'email-verification') {
+                throw new BadRequestException('Token inválido');
+            }
+
+            const user = await this.userRepository.findOne({
+                where: { email: payload.email }
+            });
+
+            if (!user) {
+                throw new BadRequestException('Token inválido');
+            }
+
+            if (user.emailVerified) {
+                return { message: 'El email ya fue verificado.' };
+            }
+
+            // Verify token matches
+            if (user.emailVerificationToken !== token) {
+                throw new BadRequestException('Token inválido o ya usado');
+            }
+
+            // Mark as verified
+            user.emailVerified = true;
+            user.emailVerificationToken = null;
+            await this.userRepository.save(user);
+
+            return { message: 'Email verificado correctamente. ¡Ya puedes iniciar sesión!' };
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                throw new BadRequestException('El enlace ha expirado. Solicita uno nuevo.');
+            }
+            if (error.name === 'JsonWebTokenError') {
+                throw new BadRequestException('Token inválido');
+            }
+            throw error;
+        }
+    }
+
+    async resendVerificationEmail(email: string): Promise<{ message: string }> {
+        const user = await this.userRepository.findOne({ where: { email } });
+
+        if (!user) {
+            return { message: 'Si el email existe, recibirás un enlace de verificación.' };
+        }
+
+        if (user.emailVerified) {
+            return { message: 'El email ya fue verificado.' };
+        }
+
+        // Generate new token
+        const verificationToken = this.jwtService.sign(
+            { email, type: 'email-verification' },
+            { expiresIn: '24h' }
+        );
+
+        user.emailVerificationToken = verificationToken;
+        await this.userRepository.save(user);
+
+        await this.emailService.sendVerificationEmail(email, user.firstName || 'Usuario', verificationToken);
+
+        return { message: 'Si el email existe, recibirás un enlace de verificación.' };
     }
 }

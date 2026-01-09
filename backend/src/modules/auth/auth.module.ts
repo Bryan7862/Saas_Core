@@ -14,6 +14,7 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { TrashModule } from '../trash/trash.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
         SubscriptionsModule,
         forwardRef(() => TrashModule),
         NotificationsModule,
+        EmailModule,
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.registerAsync({
             imports: [ConfigModule],

@@ -14,6 +14,7 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
 
     // Security & Optimization
+    // ⚠️ PRODUCCIÓN: Cambiar '*' por dominios específicos, ej: ['https://tuapp.com']
     app.enableCors({
         origin: configService.get('CORS_ORIGIN') || '*',
         credentials: true,
@@ -21,11 +22,11 @@ async function bootstrap() {
     app.use(helmet());
     app.use(compression());
 
-    // Global Pipes & Filters
+    // Global Pipes & Filters (Con validación estricta)
     app.useGlobalPipes(new ValidationPipe({
         whitelist: true,
         transform: true,
-        forbidNonWhitelisted: false, // Set to true to stricter validation
+        forbidNonWhitelisted: true, // Rechaza campos no definidos en DTOs
     }));
     app.useGlobalFilters(new AllExceptionsFilter());
     app.useGlobalInterceptors(new LoggingInterceptor());

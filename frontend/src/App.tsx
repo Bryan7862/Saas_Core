@@ -6,6 +6,9 @@ import { UsersPage } from './modules/iam/pages/UsersPage'; // Modular Version
 import { OrganizationsPage } from './modules/organizations/pages/OrganizationsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './modules/auth/pages/LoginPage';
+import { ForgotPasswordPage } from './modules/auth/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './modules/auth/pages/ResetPasswordPage';
+import { VerifyEmailPage } from './modules/auth/pages/VerifyEmailPage';
 import { TrashPage } from './modules/trash/pages/TrashPage';
 import { ConstructionPage } from './pages/ConstructionPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -43,6 +46,7 @@ import { InvoicesPage } from './modules/billing/pages/InvoicesPage';
 import { SunatConfigPage } from './modules/billing/pages/SunatConfigPage';
 import { BillingHistoryPage } from './modules/billing/pages/BillingHistoryPage';
 import { PaymentMethodsPage } from './modules/billing/pages/PaymentMethodsPage';
+import { AuditLogsPage } from './modules/audit/pages/AuditLogsPage';
 
 function App() {
     return (
@@ -56,6 +60,9 @@ function App() {
                                     <Routes>
                                         <Route path="/login" element={<LoginPage />} />
                                         <Route path="/register" element={<RegisterPage />} />
+                                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                                        <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                        <Route path="/verify-email" element={<VerifyEmailPage />} />
                                         <Route
                                             path="/*"
                                             element={
@@ -109,6 +116,7 @@ function App() {
                                                                 <Route path="/transactions" element={<TransactionsPage />} />
                                                                 <Route path="/pricing" element={<PricingPage />} />
                                                                 <Route path="/trash" element={<TrashPage />} />
+                                                                <Route path="/audit" element={<AuditLogsPage />} />
                                                                 <Route path="*" element={<Navigate to="/" replace />} />
                                                             </Routes>
                                                         </Layout>

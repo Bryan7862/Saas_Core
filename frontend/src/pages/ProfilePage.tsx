@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, MapPin, Phone, Globe, Camera, X, Eye, EyeOff } from 'lucide-react';
+import { User, MapPin, Phone, Globe, Camera, X, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { DEPARTAMENTOS_PERU, getProvinciasByDepartamento, getDistritosByProvincia } from '../data/ubicacionesPeru';
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
+import { getProfile, saveProfile, uploadProfileImage } from '../modules/profile/supabaseApi';
 
 // Re-declare local interface to match component state, or adapt.
 interface UserProfile {
@@ -51,34 +52,93 @@ export function ProfilePage() {
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
     const [changingPassword, setChangingPassword] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     // Cargar datos guardados al iniciar
     useEffect(() => {
-        const savedImage = localStorage.getItem('profileImage');
-        if (savedImage) {
-            setProfileImage(savedImage);
-        }
+        const loadProfile = async () => {
+            setLoading(true);
+            try {
+                // Intentar cargar de Supabase primero
+                const supabaseProfile = await getProfile();
 
-        const savedProfile = localStorage.getItem('userProfile');
-        if (savedProfile) {
-            const parsed = JSON.parse(savedProfile);
-            setProfile(parsed);
+                if (supabaseProfile) {
+                    const mappedProfile: UserProfile = {
+                        nombre: supabaseProfile.nombre || '',
+                        apellido: supabaseProfile.apellido || '',
+                        email: supabaseProfile.email || '',
+                        telefono: supabaseProfile.telefono || '',
+                        bio: supabaseProfile.bio || '',
+                        departamento: supabaseProfile.departamento || '',
+                        provincia: supabaseProfile.provincia || '',
+                        distrito: supabaseProfile.distrito || '',
+                        direccion: supabaseProfile.direccion || '',
+                        paginaWeb: supabaseProfile.pagina_web || '',
+                        facebookUrl: supabaseProfile.facebook_url || '',
+                        instagramUrl: supabaseProfile.instagram_url || '',
+                        whatsappNum: supabaseProfile.whatsapp_num || '',
+                    };
+                    setProfile(mappedProfile);
 
-            // Cargar provincias si hay departamento guardado
-            if (parsed.departamento) {
-                const provs = getProvinciasByDepartamento(parsed.departamento);
-                setProvincias(provs.map(p => p.nombre));
+                    if (supabaseProfile.profile_image_url) {
+                        setProfileImage(supabaseProfile.profile_image_url);
+                    }
 
-                // Cargar distritos si hay provincia guardada
-                if (parsed.provincia) {
-                    const dists = getDistritosByProvincia(parsed.departamento, parsed.provincia);
-                    setDistritos(dists);
+                    // Sync to localStorage for sidebar
+                    localStorage.setItem('userProfile', JSON.stringify(mappedProfile));
+
+                    // Cargar provincias y distritos
+                    if (supabaseProfile.departamento) {
+                        const provs = getProvinciasByDepartamento(supabaseProfile.departamento);
+                        setProvincias(provs.map(p => p.nombre));
+
+                        if (supabaseProfile.provincia) {
+                            const dists = getDistritosByProvincia(supabaseProfile.departamento, supabaseProfile.provincia);
+                            setDistritos(dists);
+                        }
+                    }
+                } else {
+                    // Fallback a localStorage si no hay datos en Supabase
+                    const savedProfile = localStorage.getItem('userProfile');
+                    if (savedProfile) {
+                        const parsed = JSON.parse(savedProfile);
+                        setProfile(parsed);
+
+                        if (parsed.departamento) {
+                            const provs = getProvinciasByDepartamento(parsed.departamento);
+                            setProvincias(provs.map(p => p.nombre));
+
+                            if (parsed.provincia) {
+                                const dists = getDistritosByProvincia(parsed.departamento, parsed.provincia);
+                                setDistritos(dists);
+                            }
+                        }
+                    }
+
+                    const savedImage = localStorage.getItem('profileImage');
+                    if (savedImage) {
+                        setProfileImage(savedImage);
+                    }
                 }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                // Fallback a localStorage en caso de error
+                const savedProfile = localStorage.getItem('userProfile');
+                if (savedProfile) {
+                    setProfile(JSON.parse(savedProfile));
+                }
+            } finally {
+                setLoading(false);
             }
-        }
+        };
+
+        loadProfile();
     }, []);
 
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             if (!file.type.startsWith('image/')) {
@@ -90,15 +150,32 @@ export function ProfilePage() {
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                setProfileImage(base64String);
-                localStorage.setItem('profileImage', base64String);
-                // Disparar evento para actualizar el sidebar
+            setUploadingImage(true);
+            try {
+                // Subir a Supabase Storage
+                const imageUrl = await uploadProfileImage(file);
+                setProfileImage(imageUrl);
+
+                // También guardar en localStorage para el sidebar (fallback)
+                localStorage.setItem('profileImage', imageUrl);
                 window.dispatchEvent(new Event('profileUpdated'));
-            };
-            reader.readAsDataURL(file);
+
+                toast.success('Imagen actualizada');
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                // Fallback a base64 en localStorage
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result as string;
+                    setProfileImage(base64String);
+                    localStorage.setItem('profileImage', base64String);
+                    window.dispatchEvent(new Event('profileUpdated'));
+                };
+                reader.readAsDataURL(file);
+                toast.error('Error al subir imagen, guardada localmente');
+            } finally {
+                setUploadingImage(false);
+            }
         }
     };
 
@@ -126,13 +203,39 @@ export function ProfilePage() {
         setSaved(false);
     };
 
-    const handleSave = () => {
-        localStorage.setItem('userProfile', JSON.stringify(profile));
-        // Disparar evento para actualizar el sidebar
-        window.dispatchEvent(new Event('profileUpdated'));
-        setSaved(true);
-        toast.success('Perfil guardado correctamente');
-        setTimeout(() => setSaved(false), 3000);
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            // Guardar en Supabase
+            await saveProfile({
+                nombre: profile.nombre,
+                apellido: profile.apellido,
+                email: profile.email,
+                telefono: profile.telefono,
+                bio: profile.bio,
+                departamento: profile.departamento,
+                provincia: profile.provincia,
+                distrito: profile.distrito,
+                direccion: profile.direccion,
+                pagina_web: profile.paginaWeb,
+                facebook_url: profile.facebookUrl || '',
+                instagram_url: profile.instagramUrl || '',
+                whatsapp_num: profile.whatsappNum || '',
+            });
+
+            // También guardar en localStorage para el sidebar
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+            window.dispatchEvent(new Event('profileUpdated'));
+
+            setSaved(true);
+            toast.success('Perfil guardado correctamente');
+            setTimeout(() => setSaved(false), 3000);
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            toast.error('Error al guardar el perfil');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleChangePassword = async () => {
@@ -175,6 +278,18 @@ export function ProfilePage() {
         return parts.length > 0 ? parts.join(', ') : 'Sin configurar';
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 size={48} className="animate-spin text-[var(--primary)] mx-auto mb-4" />
+                    <p className="text-[var(--muted)]">Cargando perfil...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col gap-4 pr-2 overflow-hidden">
             <div className="flex justify-between items-center mb-2 flex-none">
@@ -205,10 +320,15 @@ export function ProfilePage() {
                             )}
                             <button
                                 onClick={handleButtonClick}
-                                className="absolute bottom-1 right-1 w-9 h-9 bg-[var(--primary)] rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform group-hover:scale-110"
+                                disabled={uploadingImage}
+                                className="absolute bottom-1 right-1 w-9 h-9 bg-[var(--primary)] rounded-full flex items-center justify-center text-white shadow-lg transform transition-transform group-hover:scale-110 disabled:opacity-70"
                                 title="Cambiar foto"
                             >
-                                <Camera size={16} />
+                                {uploadingImage ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Camera size={16} />
+                                )}
                             </button>
                         </div>
                         <input
@@ -319,9 +439,17 @@ export function ProfilePage() {
                         <button
                             type="button"
                             onClick={handleSave}
-                            className="px-6 py-1.5 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 shadow-sm transition-all active:scale-95"
+                            disabled={saving}
+                            className="px-6 py-1.5 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:opacity-90 shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                         >
-                            Guardar Cambios
+                            {saving ? (
+                                <>
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                'Guardar Cambios'
+                            )}
                         </button>
                     </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../../../lib/api';
 import { notify } from '../../../lib/notify';
 
 export const LoginPage = () => {
@@ -12,7 +12,7 @@ export const LoginPage = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('http://localhost:3000/admin/auth/login', {
+            const response = await api.post('/admin/auth/login', {
                 email,
                 password,
             });
@@ -23,7 +23,7 @@ export const LoginPage = () => {
 
             // Fetch User Profile to get Default Context
             try {
-                const profileResponse = await axios.get('http://localhost:3000/admin/auth/profile', {
+                const profileResponse = await api.get('/admin/auth/profile', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const { defaultCompanyId } = profileResponse.data;

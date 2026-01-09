@@ -1,32 +1,106 @@
-import { useState } from 'react';
-import { CreditCard, Wallet, Banknote, QrCode, Smartphone, Save, ShieldCheck, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, Wallet, Banknote, QrCode, Smartphone, Save, ShieldCheck, Info, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+    getPaymentMethods,
+    createDefaultPaymentMethods,
+    saveAllPaymentMethods,
+    togglePaymentMethod,
+    PaymentMethod
+} from '../../settings/supabaseApi';
+
+// Map icon names to components
+const iconMap: Record<string, any> = {
+    'Banknote': Banknote,
+    'CreditCard': CreditCard,
+    'Smartphone': Smartphone,
+    'QrCode': QrCode,
+    'Wallet': Wallet,
+};
 
 export const PaymentMethodsPage = () => {
-    const [methods, setMethods] = useState([
-        { id: 1, name: 'Efectivo', icon: Banknote, enabled: true, description: 'Pagos directamente en caja (Soles)', color: 'text-emerald-500' },
-        { id: 2, name: 'Tarjetas (POS)', icon: CreditCard, enabled: true, description: 'Crédito y Débito (Visa, MC, Amex)', color: 'text-blue-500' },
-        { id: 3, name: 'Yape', icon: Smartphone, enabled: true, description: 'Transferencia móvil rápida BCP', color: 'text-purple-600', extra: '999 999 999' },
-        { id: 4, name: 'Plin', icon: QrCode, enabled: true, description: 'Transferencia móvil interbancaria', color: 'text-cyan-500', extra: '999 999 999' },
-        { id: 5, name: 'Transferencia', icon: Wallet, enabled: false, description: 'Cuentas BCP, BBVA, Scotiabank', color: 'text-orange-500' },
-    ]);
+    const [methods, setMethods] = useState<PaymentMethod[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
 
-    const handleToggle = (id: number) => {
-        setMethods(methods.map(m =>
-            m.id === id ? { ...m, enabled: !m.enabled } : m
-        ));
-    };
+    const orgId = localStorage.getItem('current_company_id') || 'default';
 
-    const handleSave = () => {
-        toast.promise(
-            new Promise((resolve) => setTimeout(resolve, 800)),
-            {
-                loading: 'Guardando configuración...',
-                success: 'Métodos de pago actualizados',
-                error: 'Error al guardar',
+    useEffect(() => {
+        loadMethods();
+    }, []);
+
+    const loadMethods = async () => {
+        setIsLoading(true);
+        try {
+            let data = await getPaymentMethods(orgId);
+
+            // Si no hay métodos, crear los por defecto
+            if (data.length === 0) {
+                data = await createDefaultPaymentMethods(orgId);
             }
-        );
+
+            setMethods(data);
+        } catch (error) {
+            console.error('Error loading payment methods:', error);
+            toast.error('Error al cargar métodos de pago');
+        } finally {
+            setIsLoading(false);
+        }
     };
+
+    const handleToggle = async (id: string) => {
+        const method = methods.find(m => m.id === id);
+        if (!method) return;
+
+        const newEnabled = !method.enabled;
+
+        // Optimistic update
+        setMethods(methods.map(m =>
+            m.id === id ? { ...m, enabled: newEnabled } : m
+        ));
+
+        try {
+            await togglePaymentMethod(id, newEnabled);
+            toast.success(newEnabled ? 'Método activado' : 'Método desactivado');
+        } catch (error) {
+            // Revert on error
+            setMethods(methods.map(m =>
+                m.id === id ? { ...m, enabled: !newEnabled } : m
+            ));
+            toast.error('Error al actualizar');
+        }
+    };
+
+    const handleFieldChange = (id: string, field: string, value: any) => {
+        setMethods(methods.map(m =>
+            m.id === id ? { ...m, [field]: value } : m
+        ));
+        setHasChanges(true);
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await saveAllPaymentMethods(methods);
+            toast.success('Métodos de pago actualizados');
+            setHasChanges(false);
+        } catch (error) {
+            console.error('Error saving:', error);
+            toast.error('Error al guardar');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+                <span className="ml-3 text-[var(--muted)]">Cargando métodos de pago...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-12">
@@ -37,77 +111,84 @@ export const PaymentMethodsPage = () => {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-bold hover:opacity-90 flex items-center gap-2 transition-all shadow-md active:scale-95"
+                    disabled={isSaving || !hasChanges}
+                    className="px-6 py-2 bg-[var(--primary)] text-white rounded-lg font-bold hover:opacity-90 flex items-center gap-2 transition-all shadow-md active:scale-95 disabled:opacity-50"
                 >
-                    <Save size={18} />
-                    Guardar Cambios
+                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                    {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-                {methods.map((method) => (
-                    <div
-                        key={method.id}
-                        className={`bg-[var(--surface)] p-6 rounded-xl border transition-all duration-200 ${method.enabled ? 'border-[var(--primary)] shadow-sm' : 'border-[var(--border)] opacity-60'}`}
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl bg-[var(--bg-primary)] ${method.color}`}>
-                                <method.icon size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="font-bold text-lg">{method.name}</h3>
-                                    {method.enabled && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded dark:bg-emerald-900/30 dark:text-emerald-400 tracking-tighter">ACTIVO</span>}
+                {methods.map((method) => {
+                    const IconComponent = iconMap[method.icon] || Wallet;
+                    return (
+                        <div
+                            key={method.id}
+                            className={`bg-[var(--surface)] p-6 rounded-xl border transition-all duration-200 ${method.enabled ? 'border-[var(--primary)] shadow-sm' : 'border-[var(--border)] opacity-60'}`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-xl bg-[var(--bg-primary)] ${method.color}`}>
+                                    <IconComponent size={24} />
                                 </div>
-                                <p className="text-sm text-[var(--muted)]">{method.description}</p>
-                            </div>
-
-                            <div className="flex items-center gap-6">
-                                {method.enabled && method.extra && (
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-[10px] text-[var(--muted)] uppercase font-bold">Dato Visible</p>
-                                        <p className="text-sm font-mono">{method.extra}</p>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-lg">{method.name}</h3>
+                                        {method.enabled && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded dark:bg-emerald-900/30 dark:text-emerald-400 tracking-tighter">ACTIVO</span>}
                                     </div>
-                                )}
-
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={method.enabled}
-                                        onChange={() => handleToggle(method.id)}
-                                    />
-                                    <div className="w-11 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]"></div>
-                                </label>
-                            </div>
-                        </div>
-
-                        {method.enabled && (
-                            <div className="mt-6 pt-6 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-[var(--muted)] uppercase mb-2">Comisión / Recargo (%)</label>
-                                    <input
-                                        type="number"
-                                        placeholder="0.00"
-                                        className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    />
-                                    <p className="mt-1 text-[10px] text-[var(--muted)]">Se aplicará automáticamente al total de la venta.</p>
+                                    <p className="text-sm text-[var(--muted)]">{method.description}</p>
                                 </div>
-                                {method.name !== 'Efectivo' && (
-                                    <div>
-                                        <label className="block text-xs font-bold text-[var(--muted)] uppercase mb-2">Número de cuenta / Celular</label>
+
+                                <div className="flex items-center gap-6">
+                                    {method.enabled && method.extra && (
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-[10px] text-[var(--muted)] uppercase font-bold">Dato Visible</p>
+                                            <p className="text-sm font-mono">{method.extra}</p>
+                                        </div>
+                                    )}
+
+                                    <label className="relative inline-flex items-center cursor-pointer">
                                         <input
-                                            type="text"
-                                            placeholder="Ingresa el dato para mostrar al cliente"
-                                            defaultValue={method.extra}
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={method.enabled}
+                                            onChange={() => handleToggle(method.id!)}
+                                        />
+                                        <div className="w-11 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {method.enabled && (
+                                <div className="mt-6 pt-6 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-[var(--muted)] uppercase mb-2">Comisión / Recargo (%)</label>
+                                        <input
+                                            type="number"
+                                            value={method.commission || 0}
+                                            onChange={(e) => handleFieldChange(method.id!, 'commission', parseFloat(e.target.value) || 0)}
+                                            placeholder="0.00"
                                             className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--primary)]"
                                         />
+                                        <p className="mt-1 text-[10px] text-[var(--muted)]">Se aplicará automáticamente al total de la venta.</p>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                                    {method.name !== 'Efectivo' && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-[var(--muted)] uppercase mb-2">Número de cuenta / Celular</label>
+                                            <input
+                                                type="text"
+                                                value={method.extra || ''}
+                                                onChange={(e) => handleFieldChange(method.id!, 'extra', e.target.value)}
+                                                placeholder="Ingresa el dato para mostrar al cliente"
+                                                className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-6 rounded-2xl flex gap-4">

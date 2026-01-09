@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsObject, MinLength } from 'class-validator';
 
 export class UpdateProfileDto {
     @IsOptional()
@@ -40,4 +40,15 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsObject()
     socialLinks?: Record<string, string>;
+
+    // Password change fields
+    @IsOptional()
+    @IsString()
+    currentPassword?: string;
+
+    @IsOptional()
+    @IsString()
+    @MinLength(6)
+    newPassword?: string;
 }
+

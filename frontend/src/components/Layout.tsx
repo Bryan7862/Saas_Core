@@ -19,28 +19,88 @@ import {
 
 import { Toaster } from 'react-hot-toast';
 import { NotificationBell } from './ui/NotificationBell';
+import { API_URL } from '../lib/api';
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [configOpen, setConfigOpen] = useState(false);
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [userName, setUserName] = useState('Usuario');
     const [userEmail, setUserEmail] = useState('');
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+    // Acordeón exclusivo: al abrir un grupo, cerrar los demás
     const toggleGroup = (label: string) => {
-        setOpenGroups(prev => ({ ...prev, [label]: !prev[label] }));
+        setOpenGroups(prev => {
+            const isCurrentlyOpen = prev[label];
+            // Si está abierto, cerrarlo; si está cerrado, abrirlo y cerrar todos los demás
+            if (isCurrentlyOpen) {
+                return { ...prev, [label]: false };
+            } else {
+                // Cerrar todos y abrir solo este
+                const newState: Record<string, boolean> = {};
+                Object.keys(prev).forEach(key => newState[key] = false);
+                newState[label] = true;
+                return newState;
+            }
+        });
     };
 
     // Cargar datos del perfil
     useEffect(() => {
+        // Flag para evitar actualizar estado si el componente se desmonta
+        let isMounted = true;
+
         const loadProfileData = async () => {
+            // Cargar imagen de perfil local
+            const savedImage = localStorage.getItem('profileImage');
+            if (savedImage && isMounted) setProfileImage(savedImage);
+
+            // Cargar datos locales primero (sin parpadeo)
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                try {
+                    const parsed = JSON.parse(savedProfile);
+                    if ((parsed.nombre || parsed.apellido) && isMounted) {
+                        setUserName(`${parsed.nombre || ''} ${parsed.apellido || ''}`.trim());
+                    }
+                    if (parsed.email && isMounted) setUserEmail(parsed.email);
+                } catch (e) { console.error(e); }
+            }
+
+            // Solo cargar del API si no hay datos locales
+            if (!savedProfile) {
+                try {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) return;
+
+                    const response = await fetch(`${API_URL}/admin/auth/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok && isMounted) {
+                        const data = await response.json();
+                        if (data.email) setUserEmail(data.email);
+                        if (data.firstName || data.lastName) {
+                            setUserName(`${data.firstName || ''} ${data.lastName || ''}`.trim());
+                        } else if (data.email) {
+                            setUserName(data.email.split('@')[0]);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load profile for sidebar", error);
+                }
+            }
+        };
+
+        loadProfileData();
+
+        // Escuchar cambios del perfil
+        const handleStorageChange = () => {
             const savedImage = localStorage.getItem('profileImage');
             if (savedImage) setProfileImage(savedImage);
 
-            // Cargar datos locales inmediatamente
             const savedProfile = localStorage.getItem('userProfile');
             if (savedProfile) {
                 try {
@@ -51,54 +111,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     if (parsed.email) setUserEmail(parsed.email);
                 } catch (e) { console.error(e); }
             }
-
-            try {
-                // Use the token directly with fetch to avoid circular dependency issues if api.ts imports layout? 
-                // actually api.ts is fine. But let's stick to fetch for zero-dep here or use api.
-                // Let's use the raw fetch but improve the logic.
-                const token = localStorage.getItem('access_token');
-                if (!token) return;
-
-                const response = await fetch('http://localhost:3000/admin/auth/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Profile Data Loaded:", data); // Debug
-
-                    if (data.email) {
-                        setUserEmail(data.email);
-                    }
-
-                    // Logic: If name exists, use it. If not, use email part or "Usuario"
-                    if (data.firstName || data.lastName) {
-                        setUserName(`${data.firstName || ''} ${data.lastName || ''}`.trim());
-                    } else if (data.email) {
-                        // Fallback to email username if no name set
-                        setUserName(data.email.split('@')[0]);
-                    }
-                } else {
-                    console.error("Profile fetch failed:", response.status);
-                }
-            } catch (error) {
-                console.error("Failed to load profile for sidebar", error);
-            }
-        };
-
-        loadProfileData();
-
-        // Escuchar cambios
-        const handleStorageChange = () => {
-            loadProfileData();
         };
 
         window.addEventListener('profileUpdated', handleStorageChange);
 
         return () => {
+            isMounted = false;
             window.removeEventListener('profileUpdated', handleStorageChange);
         };
-    }, [location]);
+    }, []);
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -219,7 +240,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* 2. Main Navigation (Center) */}
-                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+                <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 sidebar-scroll">
                     {/* Main Sections */}
                     {navGroups.map((group) => {
                         const Icon = group.icon;
@@ -314,10 +335,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     {/* Configuración */}
                     <div>
                         <button
-                            onClick={() => setConfigOpen(!configOpen)}
+                            onClick={() => toggleGroup('Configuración')}
                             className={`
                                 w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-                                ${configOpen ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--bg-primary)] hover:text-[var(--text)]'}
+                                ${openGroups['Configuración'] ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--bg-primary)] hover:text-[var(--text)]'}
                             `}
                         >
                             <div className="flex items-center gap-3">
@@ -326,11 +347,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </div>
                             <ChevronDown
                                 size={14}
-                                className={`transform transition-transform ${configOpen ? 'rotate-180' : ''}`}
+                                className={`transform transition-transform ${openGroups['Configuración'] ? 'rotate-180' : ''}`}
                             />
                         </button>
 
-                        <div className={`overflow-hidden transition-all duration-200 ${configOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className={`overflow-hidden transition-all duration-200 ${openGroups['Configuración'] ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
                             <div className="pl-10 pr-2 py-1 space-y-1">
                                 {configItems.map((subItem) => (
                                     <Link

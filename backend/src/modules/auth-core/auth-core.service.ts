@@ -68,8 +68,8 @@ export class AuthCoreService {
         if (!ownerRole) {
             ownerRole = this.roleRepository.create({
                 code: 'OWNER',
-                name: 'Owner',
-                description: 'Company Owner',
+                name: 'Propietario',
+                description: 'Propietario de la Empresa',
             });
             ownerRole = await this.roleRepository.save(ownerRole);
         }

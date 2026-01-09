@@ -62,8 +62,8 @@ export class AuthService {
             // Auto-create OWNER role if not exists (Bootstrap logic)
             ownerRole = await this.iamService.createRole({
                 code: 'OWNER',
-                name: 'Owner',
-                description: 'Company Owner',
+                name: 'Propietario',
+                description: 'Propietario de la Empresa',
             });
         }
 
@@ -128,8 +128,8 @@ export class AuthService {
             if (!memberRole) {
                 memberRole = await this.iamService.createRole({
                     code: 'MEMBER',
-                    name: 'Member',
-                    description: 'Standard Organization Member',
+                    name: 'Miembro',
+                    description: 'Miembro Estándar de la Organización',
                 });
             }
             await this.iamService.assignRole({
@@ -303,7 +303,19 @@ export class AuthService {
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
 
-        Object.assign(user, updateProfileDto);
+        // Handle password change if requested
+        if (updateProfileDto.currentPassword && updateProfileDto.newPassword) {
+            const bcrypt = await import('bcrypt');
+            const isPasswordValid = await bcrypt.compare(updateProfileDto.currentPassword, user.passwordHash);
+            if (!isPasswordValid) {
+                throw new BadRequestException('La contraseña actual es incorrecta');
+            }
+            user.passwordHash = await bcrypt.hash(updateProfileDto.newPassword, 10);
+        }
+
+        // Remove password fields from dto before assigning
+        const { currentPassword, newPassword, ...profileData } = updateProfileDto;
+        Object.assign(user, profileData);
         return this.userRepository.save(user);
     }
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { notify } from '../lib/notify';
+import { API_URL } from '../lib/api';
 
 interface SocketContextType {
     socket: Socket | null;
@@ -20,7 +21,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (!token) return;
 
         // Connect to Backend WebSocket Gateway
-        const newSocket = io('http://localhost:3000', {
+        const newSocket = io(API_URL, {
             auth: { token },
             query: { token }, // Fallback
             transports: ['websocket'], // Force WebSocket

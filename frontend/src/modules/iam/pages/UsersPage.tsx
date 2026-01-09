@@ -68,7 +68,7 @@ export const UsersPage = () => {
             await api.post('/admin/auth/users', payload); // Ensure correct endpoint path
             setFormData({ email: '', password: '', firstName: '', lastName: '', defaultCompanyId: '' });
             loadUsers();
-            alert('Usuario creado exitosamente');
+            notify.success('Usuario creado exitosamente');
         } catch (err: any) {
             console.error('Failed to create user', err);
             const msg = Array.isArray(err.response?.data?.message)
@@ -114,26 +114,26 @@ export const UsersPage = () => {
                         <form onSubmit={handleCreateUser} className="space-y-4" autoComplete="off">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombres</label>
+                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Nombres</label>
                                     <input
                                         type="text"
                                         required
                                         name="firstName"
                                         autoComplete="off"
-                                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                        className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                                         placeholder="Ingrese nombres"
                                         value={formData.firstName}
                                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">Apellidos</label>
                                     <input
                                         type="text"
                                         required
                                         name="lastName"
                                         autoComplete="off"
-                                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                        className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                                         placeholder="Ingrese apellidos"
                                         value={formData.lastName}
                                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -167,19 +167,7 @@ export const UsersPage = () => {
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-[var(--muted)] mb-1">ID de Empresa por Defecto (UUID)</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                                    placeholder="Opcional - se completa automáticamente según el contexto actual"
-                                    value={formData.defaultCompanyId}
-                                    onChange={(e) => setFormData({ ...formData, defaultCompanyId: e.target.value })}
-                                />
-                                <div className="text-xs text-gray-400 mt-1">
-                                    Creando usuario para la organización actual.
-                                </div>
-                            </div>
+                            {/* Campo de empresa oculto - se autocompleta con el contexto actual */}
                             <button type="submit" disabled={loading} className="w-full bg-[var(--primary)] text-white py-2 rounded hover:opacity-90 transition-opacity font-medium">
                                 Crear Usuario
                             </button>

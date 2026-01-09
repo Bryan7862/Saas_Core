@@ -1,13 +1,19 @@
 import axios from 'axios';
 import { notify } from './notify';
 
+// API Base URL from environment variable (falls back to localhost for development)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 // Create a configured axios instance
 export const api = axios.create({
-    baseURL: 'http://localhost:3000', // Base URL for the entire backend
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+// Export for use in other files that need the raw URL
+export { API_URL };
 
 // Request Interceptor: Inject Tokens and Context
 api.interceptors.request.use(

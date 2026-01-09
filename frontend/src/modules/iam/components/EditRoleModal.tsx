@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPermissions, syncRolePermissions } from '../api';
 import { RolePermissionsSelector } from './RolePermissionsSelector';
+import { notify } from '../../../lib/notify';
 
 interface EditRoleModalProps {
     isOpen: boolean;
@@ -44,12 +45,12 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
         setLoading(true);
         try {
             await syncRolePermissions(role.id, selectedIds);
-            alert('Permisos actualizados correctamente');
+            notify.success('Permisos actualizados correctamente');
             onUpdated();
             onClose();
         } catch (error) {
             console.error('Failed to save permissions', error);
-            alert('Error al guardar permisos');
+            notify.error('Error al guardar permisos');
         } finally {
             setLoading(false);
         }
@@ -61,13 +62,13 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
 
     return (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div className="p-6 border-b flex justify-between items-center">
+            <div className="bg-[var(--card-bg)] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-[var(--border)]">
+                <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800">Editar Rol: {role.name}</h2>
-                        {isSystemRole && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Rol de Sistema (Solo ampliar permisos)</span>}
+                        <h2 className="text-xl font-bold text-[var(--text)]">Editar Rol: {role.name}</h2>
+                        {isSystemRole && <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded">Rol de Sistema (Solo ampliar permisos)</span>}
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+                    <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--text)]">✕</button>
                 </div>
 
                 <div className="p-6 overflow-y-auto flex-1">
@@ -81,11 +82,11 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
                         // Better: If OWNER, readOnly=true.
                         readOnly={role.code === 'OWNER'}
                     />
-                    {role.code === 'OWNER' && <p className="text-sm text-gray-500 mt-2">El rol PROPIETARIO tiene acceso total irrevocable para seguridad del sistema.</p>}
+                    {role.code === 'OWNER' && <p className="text-sm text-[var(--muted)] mt-2">El rol PROPIETARIO tiene acceso total irrevocable para seguridad del sistema.</p>}
                 </div>
 
-                <div className="p-6 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg">
-                    <button onClick={onClose} className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded">Cancelar</button>
+                <div className="p-6 border-t border-[var(--border)] bg-[var(--bg-primary)] flex justify-end gap-3 rounded-b-lg">
+                    <button onClick={onClose} className="px-4 py-2 text-[var(--text)] hover:bg-[var(--border)] rounded">Cancelar</button>
                     <button
                         onClick={handleSave}
                         disabled={loading || role.code === 'OWNER'}

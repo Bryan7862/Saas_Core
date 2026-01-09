@@ -91,14 +91,14 @@ export const RolePermissionsSelector: React.FC<Props> = ({ selectedPermissions =
                 const displayResource = RESOURCE_LABELS[resource] || resource;
 
                 return (
-                    <div key={resource} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
-                            <h4 className="font-bold text-gray-700 capitalize">{displayResource}</h4>
+                    <div key={resource} className="bg-[var(--bg-primary)] p-4 rounded-lg border border-[var(--border)]">
+                        <div className="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-2">
+                            <h4 className="font-bold text-[var(--text)] capitalize">{displayResource}</h4>
                             {!readOnly && (
                                 <button
                                     type="button"
                                     onClick={() => toggleResource(resource)}
-                                    className="text-xs text-blue-600 hover:text-blue-800"
+                                    className="text-xs text-[var(--primary)] hover:underline"
                                 >
                                     {allSelected ? 'Desmarcar Todos' : 'Marcar Todos'}
                                 </button>
@@ -108,17 +108,17 @@ export const RolePermissionsSelector: React.FC<Props> = ({ selectedPermissions =
                             {resourcePerms.map(perm => {
                                 const actionLabel = ACTION_LABELS[resource]?.[perm.action] || perm.action;
                                 return (
-                                    <label key={perm.id} className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${readOnly ? 'cursor-default' : 'hover:bg-gray-100'}`}>
+                                    <label key={perm.id} className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${readOnly ? 'cursor-default' : 'hover:bg-[var(--border)]'}`}>
                                         <input
                                             type="checkbox"
                                             checked={selectedPermissions.includes(perm.id)}
                                             onChange={() => togglePermission(perm.id)}
                                             disabled={readOnly}
-                                            className="mt-1"
+                                            className="mt-1 accent-[var(--primary)]"
                                         />
                                         <div>
-                                            <div className="text-sm font-medium text-gray-800 capitalize">{actionLabel}</div>
-                                            {/* Optional: <div className="text-xs text-gray-500">{perm.description}</div> */}
+                                            <div className="text-sm font-medium text-[var(--text)] capitalize">{actionLabel}</div>
+                                            {/* Optional: <div className="text-xs text-[var(--muted)]">{perm.description}</div> */}
                                         </div>
                                     </label>
                                 );

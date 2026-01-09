@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getRoles, assignRole } from '../api';
+import { notify } from '../../../lib/notify';
 
 interface EditUserRoleModalProps {
     isOpen: boolean;
@@ -8,6 +9,13 @@ interface EditUserRoleModalProps {
     currentUserRoles: string[]; // List of role codes
     onRoleUpdated: () => void;
 }
+
+// Traducciones para roles del sistema
+const ROLE_TRANSLATIONS: Record<string, { name: string; description: string }> = {
+    'OWNER': { name: 'Propietario', description: 'Propietario de la empresa con acceso total' },
+    'ADMIN': { name: 'Administrador', description: 'Administrador con permisos ampliados' },
+    'MEMBER': { name: 'Miembro', description: 'Miembro estándar de la organización' },
+};
 
 export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, onClose, userId, currentUserRoles, onRoleUpdated }) => {
     const [roles, setRoles] = useState<any[]>([]);
@@ -48,7 +56,7 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, on
         try {
             const companyId = localStorage.getItem('current_company_id');
             if (!companyId) {
-                alert('No active organization context found');
+                notify.error('No se encontró contexto de organización activa');
                 return;
             }
             // Logic change: Backend now handles "Replace" logic automatically
@@ -57,11 +65,21 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, on
             onClose();
         } catch (error: any) {
             console.error('Failed to assign role', error);
-            const msg = error.response?.data?.message || 'Failed to assign role';
-            alert(`Error: ${msg}`);
+            const msg = error.response?.data?.message || 'Error al asignar rol';
+            notify.error(msg);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Función para obtener nombre traducido
+    const getRoleName = (role: any) => {
+        return ROLE_TRANSLATIONS[role.code]?.name || role.name;
+    };
+
+    // Función para obtener descripción traducida
+    const getRoleDescription = (role: any) => {
+        return ROLE_TRANSLATIONS[role.code]?.description || role.description;
     };
 
     if (!isOpen) return null;
@@ -79,9 +97,9 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, on
             alignItems: 'center',
             zIndex: 1000
         }}>
-            <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Asignar Rol de Usuario</h3>
-                <p className="text-sm text-gray-500 mb-6">Seleccione el rol único para este usuario en la organización. Se reemplazará cualquier rol anterior.</p>
+            <div className="bg-[var(--card-bg)] p-6 rounded-lg w-full max-w-md shadow-xl border border-[var(--border)]">
+                <h3 className="text-xl font-bold mb-2 text-[var(--text)]">Asignar Rol de Usuario</h3>
+                <p className="text-sm text-[var(--muted)] mb-6">Seleccione el rol único para este usuario en la organización. Se reemplazará cualquier rol anterior.</p>
 
                 <div className="space-y-3 mb-8">
                     {roles.map(role => {
@@ -91,8 +109,8 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, on
                                 key={role.id}
                                 onClick={() => setSelectedRoleId(role.id)}
                                 className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                                    ? 'border-[var(--primary)] bg-[var(--primary)]/10 ring-1 ring-[var(--primary)]'
+                                    : 'border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--bg-primary)]'
                                     }`}
                             >
                                 <input
@@ -104,21 +122,18 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({ isOpen, on
                                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mr-3"
                                 />
                                 <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <span className={`font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{role.name}</span>
-                                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase">{role.code}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-0.5">{role.description}</p>
+                                    <span className={`font-medium ${isSelected ? 'text-[var(--primary)]' : 'text-[var(--text)]'}`}>{getRoleName(role)}</span>
+                                    <p className="text-xs text-[var(--muted)] mt-0.5">{getRoleDescription(role)}</p>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                        className="px-4 py-2 text-[var(--text)] bg-[var(--bg-primary)] hover:bg-[var(--border)] rounded-lg font-medium transition-colors"
                     >
                         Cancelar
                     </button>

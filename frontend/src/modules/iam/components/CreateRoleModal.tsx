@@ -42,26 +42,11 @@ export const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClos
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000
-        }}>
-            <div style={{
-                backgroundColor: 'white',
-                padding: '2rem',
-                borderRadius: '8px',
-                width: '100%',
-                maxWidth: '500px'
-            }}>
-                <h2 className="text-xl font-bold mb-4">Crear Nuevo Rol</h2>
+        <div className="fixed inset-0 bg-black/50 flex justify-center
+            items-center z-50">
+            <div className="bg-[var(--card-bg)] p-8
+                rounded-lg w-full max-w-md shadow-xl border border-[var(--border)]">
+                <h2 className="text-xl font-bold mb-4 text-[var(--text)]">Crear Nuevo Rol</h2>
 
                 {error && (
                     <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
@@ -71,36 +56,36 @@ export const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClos
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Código (Identificador de Sistema)</label>
+                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Código (Identificador de Sistema)</label>
                         <input
                             type="text"
                             value={code}
                             onChange={(e) => setCode(e.target.value.toUpperCase())}
                             placeholder="Ej. GERENTE"
-                            className="w-full border border-gray-300 rounded px-3 py-2"
+                            className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">Mayúsculas, sin espacios.</p>
+                        <p className="text-xs text-[var(--muted)] mt-1">Mayúsculas, sin espacios.</p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Visible</label>
+                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Nombre Visible</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Ej. Gerente de Proyectos"
-                            className="w-full border border-gray-300 rounded px-3 py-2"
+                            className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                        <label className="block text-sm font-medium text-[var(--muted)] mb-1">Descripción</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full border border-gray-300 rounded px-3 py-2"
+                            className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded px-3 py-2 text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
                             rows={3}
                         />
                     </div>
@@ -109,7 +94,7 @@ export const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClos
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                            className="px-4 py-2 text-[var(--text)] hover:bg-[var(--bg-primary)] rounded"
                         >
                             Cancelar
                         </button>

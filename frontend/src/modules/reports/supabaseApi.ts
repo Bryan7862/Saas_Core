@@ -78,7 +78,6 @@ export const getSalesTrend = async (months: number = 6): Promise<SalesTrend[]> =
     (data || []).forEach(t => {
         const date = new Date(t.date);
         const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-        const monthName = monthNames[date.getMonth()];
 
         if (!monthlyData[monthKey]) {
             monthlyData[monthKey] = { monto: 0, transacciones: 0 };

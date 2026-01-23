@@ -17,17 +17,17 @@
 }
 
 [data-theme='dark'] {
-  /* Paleta Slate Premium - Equilibrada */
-  --bg-primary: #0F172A;  /* Fondo principal: Slate-900 (azul oscuro profundo, no negro puro) */
-  --bg-soft: #060912;     /* Sidebar: Notablemente más oscuro que el contenido */
-  --surface: #1E293B;     /* Superficie de modales y tarjetas: Slate-800 (opaco) */
-  --surface-alt: #1A2332; /* Header/Footer de modales: ~4% más oscuro que surface */
-  --primary: #3B82F6;     /* Azul vibrante para botones y acentos */
-  --text: #F1F5F9;        /* Texto principal: Slate-100 (blanco suave) */
-  --muted: #94A3B8;       /* Texto secundario: Slate-400 */
-  --border: #334155;      /* Bordes: Slate-700 (visibles pero sutiles) */
-  --card-bg: #1E293B;     /* Tarjetas/Tablas: Slate-800 (contraste sutil con el fondo) */
-  --input-bg: #1E293B;    /* Inputs: igual que tarjetas para integración */
+  /* Paleta Premium Dark - Alineada con Landing Page */
+  --bg-primary: #030712;  /* Fondo principal: gray-950 (casi negro) */
+  --bg-soft: #111827;     /* Sidebar/Soft areas: gray-900 */
+  --surface: #1F2937;     /* Tarjetas y modales: gray-800 */
+  --surface-alt: #111827; /* Header/Footer de modales: gray-900 */
+  --primary: #14B8A6;     /* Teal-500: Acento principal (como en landing) */
+  --text: #FFFFFF;        /* Texto principal: blanco puro (mayor contraste) */
+  --muted: #9CA3AF;       /* Texto secundario: gray-400 */
+  --border: #374151;      /* Bordes: gray-700 */
+  --card-bg: #1F2937;     /* Cards: gray-800 */
+  --input-bg: #111827;    /* Inputs: gray-900 */
 }
 
 /* Forzar inputs oscuros globalmente en modo dark */

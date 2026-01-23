@@ -14,7 +14,8 @@ import {
     Truck,
     BarChart3,
     FileText,
-    UserCog
+    UserCog,
+    Bot
 } from 'lucide-react';
 
 import { Toaster } from 'react-hot-toast';
@@ -222,19 +223,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     border-r border-[var(--border)]
                 `}
             >
-                {/* 1. Header / Profile Section (Top) */}
+                {/* 1. Logo Section */}
                 <div className="p-4 border-b border-[var(--border)]">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center overflow-hidden border border-border">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center">
+                            <Bot className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold text-[var(--text)] tracking-tight">Nexus ERP</span>
+                    </div>
+                </div>
+
+                {/* 2. Profile Section */}
+                <div className="p-4 border-b border-[var(--border)]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center overflow-hidden border border-[var(--border)]">
                             {profileImage ? (
-                                <img src={profileImage} alt="Avatar" className="w-12 h-12 object-cover" />
+                                <img src={profileImage} alt="Avatar" className="w-10 h-10 object-cover" />
                             ) : (
-                                <Users className="w-6 h-6 text-muted" />
+                                <Users className="w-5 h-5 text-[var(--muted)]" />
                             )}
                         </div>
-                        <div className="overflow-hidden">
-                            <h3 className="font-bold text-text leading-tight truncate">{userName}</h3>
-                            <p className="text-xs text-muted truncate">{userEmail}</p>
+                        <div className="overflow-hidden flex-1">
+                            <h3 className="font-semibold text-[var(--text)] text-sm leading-tight truncate">{userName}</h3>
+                            <p className="text-xs text-[var(--muted)] truncate">{userEmail}</p>
                         </div>
                     </div>
                 </div>

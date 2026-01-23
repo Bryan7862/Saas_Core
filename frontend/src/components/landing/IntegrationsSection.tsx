@@ -1,4 +1,4 @@
-import { Smartphone, CheckCircle } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 
 const integrations = [
     { name: 'SUNAT', desc: 'Facturación electrónica' },

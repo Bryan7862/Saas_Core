@@ -11,6 +11,7 @@ import { SuppliersProvider } from './modules/suppliers/context/SuppliersContext'
 import { BillingProvider } from './modules/billing/context/BillingContext';
 
 // Lazy-loaded pages for better initial bundle size
+const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const UsersPage = lazy(() => import('./modules/iam/pages/UsersPage').then(m => ({ default: m.UsersPage })));
 const OrganizationsPage = lazy(() => import('./modules/organizations/pages/OrganizationsPage').then(m => ({ default: m.OrganizationsPage })));
@@ -67,13 +68,17 @@ function App() {
                                 <BrowserRouter>
                                     <Suspense fallback={<PageLoader />}>
                                         <Routes>
+                                            {/* Public Routes */}
+                                            <Route path="/" element={<LandingPage />} />
                                             <Route path="/login" element={<LoginPage />} />
                                             <Route path="/register" element={<RegisterPage />} />
                                             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                                             <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+                                            {/* Protected Routes */}
                                             <Route
-                                                path="/*"
+                                                path="/dashboard/*"
                                                 element={
                                                     <RequireAuth>
                                                         <SocketProvider>

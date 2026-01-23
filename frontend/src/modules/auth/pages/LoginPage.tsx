@@ -37,7 +37,7 @@ export const LoginPage = () => {
             }
 
             // Auto-redirect to dashboard
-            navigate('/');
+            navigate('/dashboard');
         } catch (err: any) {
             console.error('Login failed:', err);
             // If it's a 401 on Login, it means Bad Credentials (api.ts skips redirect for /login)

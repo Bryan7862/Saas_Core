@@ -27,6 +27,7 @@ import {
     Type
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { ModalPortal } from '../components/ui/ModalPortal';
 
 // Tipos para los datos
 interface DataPoint {
@@ -479,16 +480,15 @@ export function DashboardPage() {
             <div>
                 <h3 className="text-lg font-bold text-[var(--text)] mb-4">Accesos Rápidos</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <QuickAction icon={Plus} label="Nueva Venta" to="/sales/pos" />
-                    <QuickAction icon={UserPlus} label="Añadir Cliente" to="/clients/new" />
-                    <QuickAction icon={Package} label="Nuevo Producto" to="/inventory/products" />
-                    <QuickAction icon={FilePlus} label="Reportes" to="/reports/sales" />
+                    <QuickAction icon={Plus} label="Nueva Venta" to="/dashboard/sales/pos" />
+                    <QuickAction icon={UserPlus} label="Añadir Cliente" to="/dashboard/clients/new" />
+                    <QuickAction icon={Package} label="Nuevo Producto" to="/dashboard/inventory/products" />
+                    <QuickAction icon={FilePlus} label="Reportes" to="/dashboard/reports/sales" />
                 </div>
             </div>
 
             {/* Modal para agregar datos */}
-            {showAddDataModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <ModalPortal isOpen={showAddDataModal}>
                     <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md overflow-hidden">
                         {/* Header */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)] flex justify-between items-center">
@@ -688,8 +688,7 @@ export function DashboardPage() {
                             )}
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 }

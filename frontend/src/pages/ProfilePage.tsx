@@ -4,6 +4,7 @@ import { DEPARTAMENTOS_PERU, getProvinciasByDepartamento, getDistritosByProvinci
 import toast from 'react-hot-toast';
 import { api } from '../lib/api';
 import { getProfile, saveProfile, uploadProfileImage } from '../modules/profile/supabaseApi';
+import { ModalPortal } from '../components/ui/ModalPortal';
 
 // Re-declare local interface to match component state, or adapt.
 interface UserProfile {
@@ -221,6 +222,7 @@ export function ProfilePage() {
                 facebook_url: profile.facebookUrl || '',
                 instagram_url: profile.instagramUrl || '',
                 whatsapp_num: profile.whatsappNum || '',
+                profile_image_url: profileImage || undefined,
             });
 
             // También guardar en localStorage para el sidebar
@@ -585,8 +587,7 @@ export function ProfilePage() {
             </div>
 
             {/* Password Change Modal */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <ModalPortal isOpen={showPasswordModal}>
                     <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md mx-4">
                         <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
                             <h3 className="text-lg font-bold text-[var(--text)]">Cambiar Contraseña</h3>
@@ -669,8 +670,7 @@ export function ProfilePage() {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 }

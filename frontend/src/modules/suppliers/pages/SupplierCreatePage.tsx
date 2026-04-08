@@ -31,7 +31,7 @@ export const SupplierCreatePage = () => {
 
         try {
             await addSupplier(formData);
-            navigate('/suppliers');
+            navigate('/dashboard/suppliers');
         } catch {
             // Error handled by context
         } finally {

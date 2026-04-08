@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowUp, ArrowDown, Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useInventory } from '../context/InventoryContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const StockAdjustmentsPage = () => {
     const { adjustments, addAdjustment, products, loading } = useInventory();
@@ -131,8 +132,7 @@ export const StockAdjustmentsPage = () => {
             </div>
 
             {/* Modal - Clean Neutral Design */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
                         {/* Header with subtle type indicator */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
@@ -214,8 +214,7 @@ export const StockAdjustmentsPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

@@ -30,7 +30,7 @@ export const ClientCreatePage = () => {
 
         try {
             await addClient(formData);
-            navigate('/clients');
+            navigate('/dashboard/clients');
         } catch {
             // Error handled by context
         } finally {

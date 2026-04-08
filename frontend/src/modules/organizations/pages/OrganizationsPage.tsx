@@ -5,6 +5,7 @@ import { api } from '../../../lib/api';
 import { notify } from '../../../lib/notify';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { ConfirmationModal } from '../../../components/ui/ConfirmationModal';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const OrganizationsPage = () => {
     // ... items ...
@@ -150,8 +151,7 @@ export const OrganizationsPage = () => {
                 </div>
 
                 {/* Create Modal */}
-                {showCreate && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <ModalPortal isOpen={showCreate}>
                         <div className="bg-[var(--card-bg)] rounded-lg p-6 max-w-md w-full m-4 border border-[var(--border)] shadow-xl">
                             <h3 className="text-lg font-medium text-[var(--text)] mb-4">Crear Nueva Organización</h3>
                             <form onSubmit={handleCreate}>
@@ -186,8 +186,7 @@ export const OrganizationsPage = () => {
                                 </div>
                             </form>
                         </div>
-                    </div>
-                )}
+            </ModalPortal>
 
 
                 {/* Confirm Suspend Modal */}

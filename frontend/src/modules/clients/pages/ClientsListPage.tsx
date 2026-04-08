@@ -3,6 +3,7 @@ import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Building, MapPin, Load
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useClients, Client } from '../context/ClientsContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const ClientsListPage = () => {
     const { clients, loading, error, deleteClient, updateClient, refreshClients } = useClients();
@@ -111,7 +112,7 @@ export const ClientsListPage = () => {
                     <p className="text-[var(--muted)]">Gestiona tu cartera de clientes</p>
                 </div>
                 <Link
-                    to="/clients/new"
+                    to="/dashboard/clients/new"
                     className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors"
                 >
                     <Plus size={20} />
@@ -142,7 +143,7 @@ export const ClientsListPage = () => {
                     <h3 className="text-lg font-medium text-[var(--text)] mb-1">No hay clientes</h3>
                     <p className="text-[var(--muted)] mb-4">Comienza agregando tu primer cliente</p>
                     <Link
-                        to="/clients/new"
+                        to="/dashboard/clients/new"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
                     >
                         <Plus size={18} />
@@ -203,8 +204,7 @@ export const ClientsListPage = () => {
             </div>
 
             {/* Edit Modal - Clean Neutral Design */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
                         {/* Header */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
@@ -285,8 +285,7 @@ export const ClientsListPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

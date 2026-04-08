@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, Plus, Search, Download, Trash2, Eye, Filter, CheckCircle, Clock, XCircle, Loader2, X } from 'lucide-react';
 import { useBilling, Invoice } from '../context/BillingContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const InvoicesPage = () => {
     const { invoices, cancelInvoice, addInvoice, loading, error } = useBilling();
@@ -203,8 +204,7 @@ export const InvoicesPage = () => {
             </div>
 
             {/* Modal para crear comprobante */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-2xl w-full max-w-md shadow-2xl border border-[var(--border)]">
                         <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
                             <h2 className="text-xl font-bold">Nuevo Comprobante</h2>
@@ -302,8 +302,7 @@ export const InvoicesPage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

@@ -110,7 +110,19 @@ export const uploadProfileImage = async (file: File): Promise<string> => {
     if (!userId) throw new Error('No user ID found');
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/avatar.${fileExt}`;
+    const timestamp = Date.now();
+    const fileName = `${userId}/avatar_${timestamp}.${fileExt}`;
+
+    // Clean up old avatars first
+    try {
+        const { data: list } = await supabase.storage.from('avatars').list(userId);
+        if (list && list.length > 0) {
+            const filesToRemove = list.map(f => `${userId}/${f.name}`);
+            await supabase.storage.from('avatars').remove(filesToRemove);
+        }
+    } catch (e) {
+        console.error('Failed to cleanup old avatars', e);
+    }
 
     const { error: uploadError } = await supabase.storage
         .from('avatars')

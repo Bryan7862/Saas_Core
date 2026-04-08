@@ -3,6 +3,7 @@ import { Search, Download, FileText, AlertCircle, X, Calendar, DollarSign, Type 
 import { getReturns, createReturn, Transaction } from '../supabaseApi';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../../context/ThemeContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const ReturnsPage = () => {
     const { theme } = useTheme();
@@ -213,8 +214,7 @@ export const ReturnsPage = () => {
             </div>
 
             {/* Create Modal - Clean Neutral Design */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl w-full max-w-md overflow-hidden">
                         {/* Header */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)] flex justify-between items-center">
@@ -291,8 +291,7 @@ export const ReturnsPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

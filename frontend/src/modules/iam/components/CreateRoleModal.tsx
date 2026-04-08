@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createRole } from '../api';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface CreateRoleModalProps {
     isOpen: boolean;
@@ -42,8 +43,7 @@ export const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClos
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex justify-center
-            items-center z-50">
+        <ModalPortal isOpen={isOpen}>
             <div className="bg-[var(--card-bg)] p-8
                 rounded-lg w-full max-w-md shadow-xl border border-[var(--border)]">
                 <h2 className="text-xl font-bold mb-4 text-[var(--text)]">Crear Nuevo Rol</h2>
@@ -108,6 +108,6 @@ export const CreateRoleModal: React.FC<CreateRoleModalProps> = ({ isOpen, onClos
                     </div>
                 </form>
             </div>
-        </div>
+        </ModalPortal>
     );
 };

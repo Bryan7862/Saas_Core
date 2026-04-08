@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getPermissions, syncRolePermissions } from '../api';
 import { RolePermissionsSelector } from './RolePermissionsSelector';
 import { notify } from '../../../lib/notify';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface EditRoleModalProps {
     isOpen: boolean;
@@ -61,7 +62,7 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
     if (!isOpen || !role) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 overflow-y-auto">
+        <ModalPortal isOpen={isOpen && !!role}>
             <div className="bg-[var(--card-bg)] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-[var(--border)]">
                 <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
                     <div>
@@ -96,6 +97,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, r
                     </button>
                 </div>
             </div>
-        </div>
+        </ModalPortal>
     );
 };

@@ -3,6 +3,7 @@ import { Truck, Plus, Search, Edit2, Trash2, User, MapPin, Building, Loader2, Al
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSuppliers, Supplier } from '../context/SuppliersContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const SuppliersListPage = () => {
     const { suppliers, loading, error, deleteSupplier, updateSupplier, refreshSuppliers } = useSuppliers();
@@ -114,7 +115,7 @@ export const SuppliersListPage = () => {
                     <p className="text-[var(--muted)]">Gestiona tus socios comerciales y suministros</p>
                 </div>
                 <Link
-                    to="/suppliers/new"
+                    to="/dashboard/suppliers/new"
                     className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors"
                 >
                     <Plus size={20} />
@@ -145,7 +146,7 @@ export const SuppliersListPage = () => {
                     <h3 className="text-lg font-medium text-[var(--text)] mb-1">No hay proveedores</h3>
                     <p className="text-[var(--muted)] mb-4">Comienza agregando tu primer proveedor</p>
                     <Link
-                        to="/suppliers/new"
+                        to="/dashboard/suppliers/new"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
                     >
                         <Plus size={18} />
@@ -230,8 +231,7 @@ export const SuppliersListPage = () => {
             )}
 
             {/* Edit Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black z-50 flex items-center justify-center p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
                         {/* Header */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
@@ -346,8 +346,7 @@ export const SuppliersListPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

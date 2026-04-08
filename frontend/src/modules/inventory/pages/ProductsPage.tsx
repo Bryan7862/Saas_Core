@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Package, Plus, Search, Filter, Edit2, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useInventory, Product } from '../context/InventoryContext';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const ProductsPage = () => {
     const { products, addProduct, updateProduct, deleteProduct, categories, loading } = useInventory();
@@ -181,8 +182,7 @@ export const ProductsPage = () => {
             </div>
 
             {/* Modal - Clean Neutral Design */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <ModalPortal isOpen={showModal}>
                     <div className="bg-[var(--surface)] rounded-xl w-full max-w-md border border-[var(--border)] shadow-xl overflow-hidden">
                         {/* Header - Subtle accent */}
                         <div className="p-5 border-b border-[var(--border)] bg-[var(--surface-alt)]">
@@ -268,8 +268,7 @@ export const ProductsPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </ModalPortal>
         </div>
     );
 };

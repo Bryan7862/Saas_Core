@@ -4,6 +4,7 @@ import { EditRoleModal } from './EditRoleModal';
 import { CreateRoleModal } from './CreateRoleModal';
 import { RoleBadge } from './RoleBadge';
 import { notify } from '../../../lib/notify';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 interface Props {
     isOpen: boolean;
@@ -59,7 +60,7 @@ export const ManageRolesModal: React.FC<Props> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-40 p-4">
+        <ModalPortal isOpen={isOpen}>
             <div className="bg-[var(--card-bg)] rounded-lg shadow-xl w-full max-w-3xl flex flex-col max-h-[80vh] border border-[var(--border)]">
                 <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-[var(--text)]">Roles de Organización</h2>
@@ -138,6 +139,6 @@ export const ManageRolesModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     setEditingRole(null);
                 }}
             />
-        </div>
+        </ModalPortal>
     );
 };

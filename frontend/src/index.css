@@ -43,10 +43,17 @@
     border-color: var(--border) !important;
 }
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-primary);
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 @layer components {

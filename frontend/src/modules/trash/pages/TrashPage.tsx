@@ -3,6 +3,7 @@ import { RotateCcw, Trash2, History, X } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { notify } from '../../../lib/notify';
 import { PageLoader } from '../../../components/ui/PageLoader';
+import { ModalPortal } from '../../../components/ui/ModalPortal';
 
 export const TrashPage = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -232,9 +233,8 @@ export const TrashPage = () => {
             }
 
             {/* Delete Confirmation Modal */}
-            {
-                showDeleteConfirm && (
-                    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+            <ModalPortal isOpen={!!showDeleteConfirm}>
+                {showDeleteConfirm && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full">
                             <h2 className="text-xl font-bold text-red-600 mb-4">Eliminación Permanente</h2>
                             <p className="mb-4 text-gray-700 dark:text-gray-300">
@@ -257,14 +257,12 @@ export const TrashPage = () => {
                                 </button>
                             </div>
                         </div>
-                    </div>
-                )
-            }
+                )}
+            </ModalPortal>
 
             {/* Audit Log Modal */}
-            {
-                showAudit && (
-                    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+            <ModalPortal isOpen={showAudit}>
+                {showAudit && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
                             <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-800 dark:text-white">Historial de Auditoría</h2>
@@ -309,9 +307,8 @@ export const TrashPage = () => {
                                 <button onClick={() => setShowAudit(false)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded">Cerrar</button>
                             </div>
                         </div>
-                    </div>
-                )
-            }
+                )}
+            </ModalPortal>
         </div >
     );
 };

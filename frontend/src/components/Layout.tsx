@@ -21,7 +21,6 @@ import {
 import { Toaster } from 'react-hot-toast';
 import { NotificationBell } from './ui/NotificationBell';
 import { API_URL } from '../lib/api';
-import { getGeneralSettings } from '../modules/settings/supabaseApi';
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
@@ -30,8 +29,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [userName, setUserName] = useState('Usuario');
     const [userEmail, setUserEmail] = useState('');
-    const [companyLogo, setCompanyLogo] = useState<string | null>(null);
-    const [companyName, setCompanyName] = useState<string>('Nexus ERP');
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
     // Acordeón exclusivo: al abrir un grupo, cerrar los demás
@@ -117,33 +114,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }
         };
 
-        const loadOrgSettings = async () => {
-            try {
-                const orgId = localStorage.getItem('current_company_id') || 'default';
-                const settings = await getGeneralSettings(orgId);
-                if (settings && isMounted) {
-                    if (settings.logo_url) setCompanyLogo(settings.logo_url);
-                    if (settings.business_name || settings.legal_name) {
-                        setCompanyName(settings.business_name || settings.legal_name);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to load org settings for sidebar", error);
-            }
-        };
-
-        const handleOrgChange = () => {
-            loadOrgSettings();
-        };
-
-        loadOrgSettings();
-        window.addEventListener('organizationUpdated', handleOrgChange);
         window.addEventListener('profileUpdated', handleStorageChange);
 
         return () => {
             isMounted = false;
             window.removeEventListener('profileUpdated', handleStorageChange);
-            window.removeEventListener('organizationUpdated', handleOrgChange);
         };
     }, []);
 

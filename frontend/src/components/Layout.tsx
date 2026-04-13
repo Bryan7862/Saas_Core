@@ -21,6 +21,7 @@ import {
 import { Toaster } from 'react-hot-toast';
 import { NotificationBell } from './ui/NotificationBell';
 import { API_URL } from '../lib/api';
+import { getGeneralSettings } from '../modules/settings/supabaseApi';
 
 export function Layout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
@@ -29,6 +30,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [userName, setUserName] = useState('Usuario');
     const [userEmail, setUserEmail] = useState('');
+    const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+    const [companyName, setCompanyName] = useState<string>('Nexus ERP');
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
     // Acordeón exclusivo: al abrir un grupo, cerrar los demás
@@ -114,11 +117,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
             }
         };
 
+        const loadOrgSettings = async () => {
+            try {
+                const orgId = localStorage.getItem('current_company_id') || 'default';
+                const settings = await getGeneralSettings(orgId);
+                if (settings && isMounted) {
+                    if (settings.logo_url) setCompanyLogo(settings.logo_url);
+                    if (settings.business_name || settings.legal_name) {
+                        setCompanyName(settings.business_name || settings.legal_name);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load org settings for sidebar", error);
+            }
+        };
+
+        const handleOrgChange = () => {
+            loadOrgSettings();
+        };
+
+        loadOrgSettings();
+        window.addEventListener('organizationUpdated', handleOrgChange);
         window.addEventListener('profileUpdated', handleStorageChange);
 
         return () => {
             isMounted = false;
             window.removeEventListener('profileUpdated', handleStorageChange);
+            window.removeEventListener('organizationUpdated', handleOrgChange);
         };
     }, []);
 
@@ -227,7 +252,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {/* 1. Logo Section */}
                 <div className="p-4 border-b border-[var(--border)]">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center shrink-0">
                             <Bot className="w-5 h-5 text-white" />
                         </div>
                         <span className="text-xl font-bold text-[var(--text)] tracking-tight">Nexus ERP</span>

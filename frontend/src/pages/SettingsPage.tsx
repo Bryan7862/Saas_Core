@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getGeneralSettings, saveGeneralSettings, uploadLogo, GeneralSettings } from '../modules/settings/supabaseApi';
+import { getProfile, saveProfile } from '../modules/profile/supabaseApi';
 
 export function SettingsPage() {
     const { theme, toggleTheme } = useTheme();
@@ -69,6 +70,36 @@ export function SettingsPage() {
         setIsSaving(true);
         try {
             await saveGeneralSettings(orgId, formData);
+            window.dispatchEvent(new Event('organizationUpdated'));
+
+            // Sync also on save if logo exists
+            if (formData.logo_url) {
+                try {
+                    localStorage.setItem('profileImage', formData.logo_url);
+                    window.dispatchEvent(new Event('profileUpdated'));
+                    
+                    const currentProfile = await getProfile();
+                    await saveProfile({
+                        nombre: currentProfile?.nombre || '',
+                        apellido: currentProfile?.apellido || '',
+                        email: currentProfile?.email || '',
+                        telefono: currentProfile?.telefono || '',
+                        bio: currentProfile?.bio || '',
+                        departamento: currentProfile?.departamento || '',
+                        provincia: currentProfile?.provincia || '',
+                        distrito: currentProfile?.distrito || '',
+                        direccion: currentProfile?.direccion || '',
+                        pagina_web: currentProfile?.pagina_web || '',
+                        facebook_url: currentProfile?.facebook_url || '',
+                        instagram_url: currentProfile?.instagram_url || '',
+                        whatsapp_num: currentProfile?.whatsapp_num || '',
+                        profile_image_url: formData.logo_url
+                    });
+                } catch (e) {
+                    console.error('Error syncing on save', e);
+                }
+            }
+
             toast.success('Configuración guardada correctamente');
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -100,7 +131,35 @@ export function SettingsPage() {
             setFormData(prev => ({ ...prev, logo_url: logoUrl }));
             // Guardar inmediatamente
             await saveGeneralSettings(orgId, { ...formData, logo_url: logoUrl });
-            toast.success('Logo actualizado');
+            window.dispatchEvent(new Event('organizationUpdated'));
+
+            // Sincronizar automáticamente la foto de perfil del usuario con este nuevo logo (UX fallback)
+            try {
+                localStorage.setItem('profileImage', logoUrl);
+                window.dispatchEvent(new Event('profileUpdated'));
+                
+                const currentProfile = await getProfile();
+                await saveProfile({
+                    nombre: currentProfile?.nombre || '',
+                    apellido: currentProfile?.apellido || '',
+                    email: currentProfile?.email || '',
+                    telefono: currentProfile?.telefono || '',
+                    bio: currentProfile?.bio || '',
+                    departamento: currentProfile?.departamento || '',
+                    provincia: currentProfile?.provincia || '',
+                    distrito: currentProfile?.distrito || '',
+                    direccion: currentProfile?.direccion || '',
+                    pagina_web: currentProfile?.pagina_web || '',
+                    facebook_url: currentProfile?.facebook_url || '',
+                    instagram_url: currentProfile?.instagram_url || '',
+                    whatsapp_num: currentProfile?.whatsapp_num || '',
+                    profile_image_url: logoUrl
+                });
+            } catch (syncError) {
+                console.error('Error synchronizing profile image:', syncError);
+            }
+
+            toast.success('Logo de empresa y foto de perfil actualizados!');
         } catch (error) {
             console.error('Error uploading logo:', error);
             toast.error('Error al subir logo');
